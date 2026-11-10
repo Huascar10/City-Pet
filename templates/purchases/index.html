@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Compras y Cuentas por Pagar — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Compras y Cuentas por Pagar a Proveedores</h1>
+    <p class="text-muted small mb-0">Recepción de mercancía, actualización de costos, control de saldos pendientes y pagos a proveedores</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+    <a href="{{ url_for('purchases.new') }}" class="btn btn-citypet-primary d-inline-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-cart-plus-fill"></i> Registrar Nueva Compra
+    </a>
+  </div>
+</div>
+
+<!-- Accounts Payable Summary Cards -->
+{% set active_purchases = purchases|selectattr('status', 'ne', 'anulada')|list %}
+{% set total_purchased = active_purchases|sum(attribute='total') %}
+{% set total_paid = active_purchases|sum(attribute='paid_amount') %}
+{% set total_payable = active_purchases|sum(attribute='balance_due') %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="citypet-card metric-card p-3">
+      <div class="metric-label">Total Compras Registradas</div>
+      <div class="metric-value text-primary mt-1">{{ currency }} {{ "{:,.2f}".format(total_purchased) }}</div>
+      <small class="text-muted">{{ active_purchases|length }} orden(es) activa(s)</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card success p-3">
+      <div class="metric-label">Total Pagado a Proveedores</div>
+      <div class="metric-value text-success mt-1">{{ currency }} {{ "{:,.2f}".format(total_paid) }}</div>
+      <small class="text-muted">Desembolsos reales registrados en caja</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Saldo Pendiente por Pagar (Deuda)</div>
+      <div class="metric-value text-danger mt-1">{{ currency }} {{ "{:,.2f}".format(total_payable) }}</div>
+      <small class="text-muted">Cuentas por pagar abiertas con proveedores</small>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="citypet-card p-3 mb-4">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Buscar por número, factura o proveedor...">
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="supplier_id">
+        <option value="">Todos los proveedores</option>
+        {% for s in suppliers %}
+        <option value="{{ s.id }}" {% if supplier_id == s.id|string %}selected{% endif %}>{{ s.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="status">
+        <option value="">Todos los estados</option>
+        <option value="completada" {% if status == 'completada' %}selected{% endif %}>Activas</option>
+        <option value="anulada" {% if status == 'anulada' %}selected{% endif %}>Anuladas</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-filter"></i> Filtrar</button>
+      <a href="{{ url_for('purchases.index') }}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+</div>
+
+<!-- Purchases Table -->
+<div class="citypet-card">
+  <div class="table-responsive">
+    <table class="citypet-table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>No. Compra</th>
+          <th>Fecha / Vence</th>
+          <th>Proveedor</th>
+          <th>Factura Prov.</th>
+          <th>Condición</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Pagado</th>
+          <th class="text-end">Saldo por Pagar</th>
+          <th class="text-center">Estado Pago</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in purchases %}
+        <tr class="{% if p.status == 'anulada' %}bg-light opacity-75{% endif %}">
+          <td>
+            <a href="{{ url_for('purchases.show', id=p.id) }}" class="fw-bold text-primary text-decoration-none">
+              {{ p.purchase_number }}
+            </a>
+          </td>
+          <td>
+            <small class="text-muted d-block">{{ p.created_at.strftime('%d/%m/%Y') }}</small>
+            {% if p.due_date and not p.is_paid %}
+            <small class="{% if p.is_overdue %}text-danger fw-bold{% else %}text-secondary{% endif %}">
+              Vence: {{ p.due_date.strftime('%d/%m/%Y') }}
+            </small>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.supplier_id %}
+            <a href="{{ url_for('suppliers.history', id=p.supplier_id) }}" class="fw-semibold text-decoration-none">{{ p.supplier_name_snapshot }}</a>
+            {% else %}
+            <div class="fw-semibold">{{ p.supplier_name_snapshot }}</div>
+            {% endif %}
+            {% if p.supplier_ruc_snapshot %}<small class="text-muted d-block">RUC: {{ p.supplier_ruc_snapshot }}</small>{% endif %}
+          </td>
+          <td>{{ p.supplier_invoice_number or '-' }}</td>
+          <td><span class="badge bg-light text-dark border">{{ p.payment_condition }}</span></td>
+          <td class="text-end fw-semibold">{{ currency }} {{ "{:,.2f}".format(p.total) }}</td>
+          <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format(p.paid_amount) }}</td>
+          <td class="text-end fw-bold {% if p.balance_due > 0.009 %}text-danger{% else %}text-success{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format(p.balance_due) }}
+          </td>
+          <td class="text-center">
+            {% if p.status == 'anulada' %}
+            <span class="badge bg-danger">Anulada</span>
+            {% elif p.payment_status == 'Liquidado' %}
+            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Liquidado</span>
+            {% elif p.is_overdue %}
+            <span class="badge bg-danger"><i class="bi bi-exclamation-circle me-1"></i>Vencida</span>
+            {% elif p.payment_status == 'Abonado' %}
+            <span class="badge bg-warning text-dark">Abonado</span>
+            {% else %}
+            <span class="badge bg-secondary">Pendiente</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              {% if p.status != 'anulada' and p.balance_due > 0.009 %}
+              <button type="button" class="btn btn-success" title="Registrar Pago a Proveedor"
+                      onclick="openSupplierPaymentModal('{{ p.id }}', '{{ p.purchase_number }}', '{{ p.supplier_name_snapshot|escape }}', '{{ p.balance_due }}')">
+                <i class="bi bi-cash-stack"></i> Pagar
+              </button>
+              {% endif %}
+              <a href="{{ url_for('purchases.show', id=p.id) }}" class="btn btn-outline-primary" title="Ver Detalle y Pagos">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if p.receipt_id %}
+              <a href="{{ url_for('receipts.view_receipt', id=p.receipt_id) }}" class="btn btn-outline-secondary" title="Ver Comprobante">
+                <i class="bi bi-receipt"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="text-center py-5 text-muted">
+            <i class="bi bi-bag-x fs-1 text-secondary d-block mb-2"></i>
+            No se encontraron registros de compras.
+            <div class="mt-2">
+              <a href="{{ url_for('purchases.new') }}" class="btn btn-sm btn-citypet-primary">Registrar la primera compra</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Registrar Pago a Proveedor -->
+<div class="modal fade" id="supplierPaymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="supplierPaymentForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="idempotency_token" id="suppPayIdempotency">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-bank me-2"></i>Registrar Pago a Proveedor</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="bg-light p-3 rounded mb-3 border">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Orden de Compra:</span>
+              <strong id="modalPurchNum" class="text-primary">-</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Proveedor:</span>
+              <strong id="modalSuppName">-</strong>
+            </div>
+            <div class="d-flex justify-content-between mt-1 pt-1 border-top">
+              <span class="text-muted">Saldo Pendiente por Pagar:</span>
+              <strong id="modalPurchBalance" class="text-danger fs-6">-</strong>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a Pagar ({{ currency }}) *</label>
+            <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fw-bold" name="amount" id="suppPayAmount" required>
+            <div class="form-text">Este desembolso generará una salida real de dinero en Caja y reducirá la deuda con el proveedor.</div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Método de Pago *</label>
+              <select class="form-select" name="payment_method" required>
+                <option value="Efectivo" selected>Efectivo</option>
+                <option value="Transferencia">Transferencia Bancaria</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Referencia / No. Cheque</label>
+              <input type="text" class="form-control" name="reference" placeholder="Ej. Transf #4521">
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Detalle del pago o abono a proveedor"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success fw-bold">
+            <i class="bi bi-check-lg me-1"></i> Confirmar Pago y Emitir Comprobante
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openSupplierPaymentModal(purchaseId, purchaseNumber, supplierName, balanceDue) {
+  const bal = parseFloat(balanceDue) || 0;
+  document.getElementById('modalPurchNum').textContent = purchaseNumber;
+  document.getElementById('modalSuppName').textContent = supplierName;
+  document.getElementById('modalPurchBalance').textContent = '{{ currency }} ' + bal.toFixed(2);
+
+  const amountInput = document.getElementById('suppPayAmount');
+  amountInput.value = bal.toFixed(2);
+  amountInput.max = bal.toFixed(2);
+
+  document.getElementById('supplierPaymentForm').action = '/purchases/' + purchaseId + '/payment';
+  document.getElementById('suppPayIdempotency').value = 'PAGP-' + crypto.randomUUID();
+
+  new bootstrap.Modal(document.getElementById('supplierPaymentModal')).show();
+}
+</script>
+{% endblock %}

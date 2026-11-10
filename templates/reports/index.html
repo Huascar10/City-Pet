@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block title %}Reportes y Exportaciones{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Módulo de Reportes y Exportación</h1>
+    <p class="text-muted small mb-0">Generación de informes ejecutivos en Excel (.xlsx) y PDF</p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('reports.export_excel', type=report_type, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-file-earmark-excel-fill"></i> Descargar Excel (.xlsx)
+    </a>
+    <a href="{{ url_for('reports.export_pdf', type=report_type, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
+    </a>
+  </div>
+</div>
+
+<!-- Report Controls & Filters -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <select name="type" class="form-select form-select-sm">
+        <option value="sales" {% if report_type == 'sales' %}selected{% endif %}>Reporte de Ventas y Utilidad Bruta</option>
+        <option value="inventory" {% if report_type == 'inventory' %}selected{% endif %}>Reporte de Inventario y Auditoría Física</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white">Desde</span>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white">Hasta</span>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100">
+        <i class="bi bi-funnel"></i> Actualizar Reporte
+      </button>
+    </div>
+  </form>
+</div>
+
+{% if report_type == 'sales' %}
+<!-- Sales Report View -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card success p-3">
+      <div class="metric-label text-success">Facturación Total del Período</div>
+      <div class="metric-value text-success">{{ currency }} {{ "{:,.2f}".format(sales_report.total_revenue) }}</div>
+      <small class="text-muted">{{ sales_report.count }} facturas confirmadas</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card danger p-3">
+      <div class="metric-label text-danger">Costo de Ventas</div>
+      <div class="metric-value text-danger">{{ currency }} {{ "{:,.2f}".format(sales_report.total_cost) }}</div>
+      <small class="text-muted">Costo de adquisición de mercancía</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card info p-3">
+      <div class="metric-label text-primary">Ganancia Bruta Estimada</div>
+      <div class="metric-value text-primary">{{ currency }} {{ "{:,.2f}".format(sales_report.gross_profit) }}</div>
+      <small class="text-muted">Margen comercial positivo</small>
+    </div>
+  </div>
+</div>
+
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Factura Nº</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Vendedor</th>
+          <th>Forma de Pago</th>
+          <th class="text-end">Subtotal</th>
+          <th class="text-end">Descuento</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Costo Venta</th>
+          <th class="text-end">Ganancia Bruta</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales_report.sales %}
+        {% set profit = (s.total or 0.0) - (s.cost_of_sales or 0.0) %}
+        <tr>
+          <td class="fw-bold">#{{ s.invoice_number }}</td>
+          <td class="small text-muted">{{ s.created_at.strftime('%d/%m/%Y') if s.created_at else '' }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ s.client_name }}</td>
+          <td class="small text-muted">{{ s.salesperson or 'Mostrador' }}</td>
+          <td class="small">{{ s.payment_method }}</td>
+          <td class="text-end text-muted small">{{ currency }} {{ "{:,.2f}".format((s.subtotal or 0.0)|float) }}</td>
+          <td class="text-end text-danger small">-{{ currency }} {{ "{:,.2f}".format((s.discount_amount or 0.0)|float) }}</td>
+          <td class="text-end fw-bold text-dark">{{ currency }} {{ "{:,.2f}".format((s.total or 0.0)|float) }}</td>
+          <td class="text-end text-muted small">{{ currency }} {{ "{:,.2f}".format((s.cost_of_sales or 0.0)|float) }}</td>
+          <td class="text-end fw-bold text-success">{{ currency }} {{ "{:,.2f}".format((profit or 0.0)|float) }}</td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('receipts.view_receipt', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-primary" title="Ver Detalle Factura">
+                <i class="bi bi-eye"></i> Detalle
+              </a>
+              <a href="{{ url_for('receipts.print_receipt', id=(s.receipt_id or s.id)) }}" target="_blank" class="btn btn-outline-secondary" title="Imprimir">
+                <i class="bi bi-printer"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="11" class="text-center py-5 text-muted">No se registran ventas en el rango seleccionado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<!-- Inventory & Valuation Report View -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card citypet-card metric-card p-3">
+      <div class="metric-label">Valor Total del Inventario (al Costo)</div>
+      <div class="metric-value">{{ currency }} {{ "{:,.2f}".format(total_inventory_value) }}</div>
+      <small class="text-muted">Calculado según existencia física y costo de compra</small>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card citypet-card metric-card {% if discrepancy_count > 0 %}warning{% else %}success{% endif %} p-3">
+      <div class="metric-label">Discrepancias Físico vs Sistema</div>
+      <div class="metric-value {% if discrepancy_count > 0 %}text-warning{% else %}text-success{% endif %}">
+        {{ discrepancy_count }} producto(s)
+      </div>
+      <small class="text-muted">Artículos con diferencia entre bodega y sistema</small>
+    </div>
+  </div>
+</div>
+
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th>Categoría</th>
+          <th class="text-center">Stock Sistema</th>
+          <th class="text-center">Conteo Físico</th>
+          <th class="text-center">Diferencia</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Valoración Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in inventory_items %}
+        <tr>
+          <td><code>{{ item.code }}</code></td>
+          <td class="fw-bold">{{ item.name }}</td>
+          <td><span class="badge bg-light text-secondary border">{{ item.category }}</span></td>
+          <td class="text-center fw-semibold">{{ item.current_stock|int }}</td>
+          <td class="text-center fw-bold">{{ item.physical_stock|int }}</td>
+          <td class="text-center fw-bold">
+            {% if item.difference > 0 %}
+            <span class="text-success">+{{ item.difference|int }}</span>
+            {% elif item.difference < 0 %}
+            <span class="text-danger">{{ item.difference|int }}</span>
+            {% else %}
+            <span class="text-muted">0</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if item.status == 'Agotada' %}
+            <span class="badge badge-status-danger">Agotada</span>
+            {% elif item.status == 'Menor al Minimo' %}
+            <span class="badge badge-status-warning">Menor al Mínimo</span>
+            {% else %}
+            <span class="badge badge-status-ok">Ok</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-bold text-dark">{{ currency }} {{ "{:,.2f}".format(item.valuation) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

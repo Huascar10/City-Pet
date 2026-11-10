@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% block title %}Perfil de Proveedor — {{ supplier.company_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('suppliers.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Proveedores</a>
+      <h1 class="h3 fw-bold mb-0">{{ supplier.company_name }}</h1>
+      <span class="badge bg-primary">{{ supplier.code }}</span>
+    </div>
+    <p class="text-muted small mb-0">
+      Contacto: <strong>{{ supplier.contact_name or 'N/A' }}</strong> |
+      Tel: <strong>{{ supplier.phone or 'N/A' }}</strong> |
+      RUC: <strong>{{ supplier.ruc or 'N/A' }}</strong>
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('purchases.new') }}" class="btn btn-sm btn-citypet-primary">
+      <i class="bi bi-bag-plus me-1"></i> Registrar Compra a Proveedor
+    </a>
+  </div>
+</div>
+
+<!-- 3.4 Resumen de Cuentas por Pagar del Proveedor -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card danger p-3 h-100">
+      <div class="metric-label">Total Adeudado al Proveedor</div>
+      <div class="metric-value text-danger mt-1">{{ currency }} {{ "{:,.2f}".format(supplier.total_debt) }}</div>
+      <small class="text-muted">Cuentas por pagar activas</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card warning p-3 h-100">
+      <div class="metric-label">Compras Pendientes de Pago</div>
+      <div class="metric-value text-warning mt-1">{{ pending_purchases|length }}</div>
+      <small class="text-muted">{{ overdue_purchases|length }} vencida(s)</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card success p-3 h-100">
+      <div class="metric-label">Pagos y Abonos Realizados</div>
+      <div class="metric-value text-success mt-1">{{ supplier_payments|length }}</div>
+      <small class="text-muted">{{ liquidated_purchases|length }} compra(s) liquidada(s)</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card p-3 h-100">
+      <div class="metric-label">Movimientos / Lotes Recibidos</div>
+      <div class="metric-value text-primary mt-1">{{ movements|length }}</div>
+      <small class="text-muted">{{ products|length }} producto(s) asociado(s)</small>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs del Perfil Unificado del Proveedor -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#supp-tab-pending" type="button" role="tab">
+      <i class="bi bi-clock-history text-danger me-1"></i> Compras Pendientes ({{ pending_purchases|length }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#supp-tab-payments" type="button" role="tab">
+      <i class="bi bi-cash-stack text-success me-1"></i> Historial de Pagos ({{ supplier_payments|length }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#supp-tab-purchases" type="button" role="tab">
+      <i class="bi bi-journal-check text-primary me-1"></i> Todas las Compras y Liquidaciones ({{ purchases|length }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#supp-tab-movements" type="button" role="tab">
+      <i class="bi bi-box-seam me-1"></i> Entradas Históricas y Productos ({{ movements|length }})
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#supp-tab-receipts" type="button" role="tab">
+      <i class="bi bi-file-earmark-text me-1"></i> Comprobantes ({{ receipts|length }})
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <!-- Tab 1: Compras Pendientes de Pago -->
+  <div class="tab-pane fade show active" id="supp-tab-pending" role="tabpanel">
+    <div class="card citypet-card border-0 p-3">
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>No. Compra</th>
+              <th>Factura Prov.</th>
+              <th>Fecha / Vence</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Pagado</th>
+              <th class="text-end">Saldo por Pagar</th>
+              <th class="text-center">Estado</th>
+              <th class="text-end">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in pending_purchases %}
+            <tr>
+              <td><a href="{{ url_for('purchases.show', id=p.id) }}" class="fw-bold text-primary">{{ p.purchase_number }}</a></td>
+              <td>{{ p.supplier_invoice_number or '—' }}</td>
+              <td class="small">
+                <div>{{ p.created_at.strftime('%d/%m/%Y') }}</div>
+                {% if p.due_date %}
+                <small class="{% if p.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">Vence: {{ p.due_date.strftime('%d/%m/%Y') }}</small>
+                {% endif %}
+              </td>
+              <td class="text-end">{{ currency }} {{ "{:,.2f}".format(p.total) }}</td>
+              <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format(p.paid_amount) }}</td>
+              <td class="text-end fw-bold text-danger">{{ currency }} {{ "{:,.2f}".format(p.balance_due) }}</td>
+              <td class="text-center">
+                {% if p.is_overdue %}
+                <span class="badge bg-danger">Vencida</span>
+                {% elif p.payment_status == 'Abonado' %}
+                <span class="badge bg-warning text-dark">Abonado</span>
+                {% else %}
+                <span class="badge bg-secondary">Pendiente</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-success"
+                        onclick="openSuppPayModal('{{ p.id }}', '{{ p.purchase_number }}', '{{ p.balance_due }}')">
+                  <i class="bi bi-cash-stack"></i> Registrar Pago
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">
+                <i class="bi bi-check-circle text-success fs-4 d-block mb-1"></i>
+                No hay compras pendientes de pago con este proveedor.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Historial de Pagos a Proveedor -->
+  <div class="tab-pane fade" id="supp-tab-payments" role="tabpanel">
+    <div class="card citypet-card border-0 p-3">
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Comprobante</th>
+              <th>Fecha</th>
+              <th>Orden Compra</th>
+              <th>Método</th>
+              <th class="text-end">Saldo Anterior</th>
+              <th class="text-end">Monto Pagado</th>
+              <th class="text-end">Saldo Restante</th>
+              <th class="text-end">Recibo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sp in supplier_payments %}
+            <tr>
+              <td class="fw-bold">{{ sp.payment_number }}</td>
+              <td class="small text-muted">{{ sp.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td>{{ sp.purchase.purchase_number if sp.purchase else '-' }}</td>
+              <td><span class="badge bg-light text-dark border">{{ sp.payment_method }}</span></td>
+              <td class="text-end text-muted">{{ currency }} {{ "{:,.2f}".format(sp.previous_balance) }}</td>
+              <td class="text-end fw-bold text-success">{{ currency }} {{ "{:,.2f}".format(sp.amount) }}</td>
+              <td class="text-end fw-semibold {% if sp.new_balance <= 0.009 %}text-success{% else %}text-danger{% endif %}">
+                {{ currency }} {{ "{:,.2f}".format(sp.new_balance) }}
+              </td>
+              <td class="text-end">
+                {% if sp.receipt_id %}
+                <a href="{{ url_for('receipts.view_receipt', id=sp.receipt_id) }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-receipt"></i>
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No se han registrado pagos posteriores para este proveedor.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Todas las Compras y Liquidaciones -->
+  <div class="tab-pane fade" id="supp-tab-purchases" role="tabpanel">
+    <div class="card citypet-card border-0 p-3">
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>No. Compra</th>
+              <th>Factura Prov.</th>
+              <th>Fecha</th>
+              <th>Condición</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Pagado</th>
+              <th class="text-end">Saldo</th>
+              <th class="text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in purchases %}
+            <tr>
+              <td><a href="{{ url_for('purchases.show', id=p.id) }}" class="fw-bold">{{ p.purchase_number }}</a></td>
+              <td>{{ p.supplier_invoice_number or '—' }}</td>
+              <td class="small text-muted">{{ p.created_at.strftime('%d/%m/%Y') }}</td>
+              <td>{{ p.payment_condition }}</td>
+              <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format(p.total) }}</td>
+              <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format(p.paid_amount) }}</td>
+              <td class="text-end {% if p.balance_due > 0.009 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                {{ currency }} {{ "{:,.2f}".format(p.balance_due) }}
+              </td>
+              <td class="text-center">
+                {% if p.status == 'anulada' %}
+                <span class="badge bg-danger">Anulada</span>
+                {% elif p.payment_status == 'Liquidado' %}
+                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Liquidado</span>
+                {% elif p.payment_status == 'Abonado' %}
+                <span class="badge bg-warning text-dark">Abonado</span>
+                {% else %}
+                <span class="badge bg-secondary">Pendiente</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No hay órdenes de compra operativas registradas.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Entradas Históricas y Productos -->
+  <div class="tab-pane fade" id="supp-tab-movements" role="tabpanel">
+    <div class="card citypet-card border-0 p-3">
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Código Mov.</th>
+              <th>Producto</th>
+              <th>Factura / Doc.</th>
+              <th>Régimen Fiscal</th>
+              <th class="text-end">Cantidad</th>
+              <th class="text-end">Costo Unit.</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movements %}
+            <tr>
+              <td class="small text-muted">{{ m.created_at.strftime('%d/%m/%Y') }}</td>
+              <td><code>{{ m.code }}</code></td>
+              <td class="fw-semibold">{{ m.product.name if m.product else 'Producto' }}</td>
+              <td class="small">{{ m.invoice_number or '—' }}</td>
+              <td class="small"><span class="badge bg-light text-dark border">{{ m.tax_applied or 'Exento' }}</span></td>
+              <td class="text-end fw-bold text-success">+{{ m.quantity|int }}</td>
+              <td class="text-end text-muted small">{{ currency }} {{ "{:,.2f}".format(m.unit_cost) }}</td>
+              <td class="text-end fw-semibold small">{{ currency }} {{ "{:,.2f}".format(m.total_amount) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No se registran movimientos de entrada para este proveedor.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Comprobantes Asociados -->
+  <div class="tab-pane fade" id="supp-tab-receipts" role="tabpanel">
+    <div class="card citypet-card border-0 p-3">
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Comprobante Nº</th>
+              <th>Tipo</th>
+              <th>Fecha</th>
+              <th class="text-end">Importe</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in receipts %}
+            <tr>
+              <td class="fw-bold">{{ r.receipt_number }}</td>
+              <td><span class="badge bg-primary-subtle text-primary border">{{ r.receipt_type }}</span></td>
+              <td class="small text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format(r.total_amount) }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('receipts.view_receipt', id=r.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('receipts.download_pdf', id=r.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i></a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No hay comprobantes emitidos para este proveedor.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar Pago a Proveedor -->
+<div class="modal fade" id="suppPayModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="suppPayForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="idempotency_token" id="suppPayModalIdemp">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-bank me-2"></i>Registrar Pago a {{ supplier.company_name }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="bg-light p-3 rounded mb-3 border">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Orden de Compra:</span>
+              <strong id="suppModalPurchNum" class="text-primary">-</strong>
+            </div>
+            <div class="d-flex justify-content-between mt-1 pt-1 border-top">
+              <span class="text-muted">Saldo Pendiente:</span>
+              <strong id="suppModalBalance" class="text-danger fs-6">-</strong>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a Pagar ({{ currency }}) *</label>
+            <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fw-bold" name="amount" id="suppModalAmount" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Método de Pago *</label>
+              <select class="form-select" name="payment_method" required>
+                <option value="Efectivo" selected>Efectivo</option>
+                <option value="Transferencia">Transferencia Bancaria</option>
+                <option value="Cheque">Cheque</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Referencia</label>
+              <input type="text" class="form-control" name="reference">
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" name="notes" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success fw-bold">Confirmar Pago</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openSuppPayModal(purchaseId, purchaseNum, balanceDue) {
+  const bal = parseFloat(balanceDue) || 0;
+  document.getElementById('suppModalPurchNum').textContent = purchaseNum;
+  document.getElementById('suppModalBalance').textContent = '{{ currency }} ' + bal.toFixed(2);
+  const amt = document.getElementById('suppModalAmount');
+  amt.value = bal.toFixed(2);
+  amt.max = bal.toFixed(2);
+  document.getElementById('suppPayForm').action = '/purchases/' + purchaseId + '/payment';
+  document.getElementById('suppPayModalIdemp').value = 'PAGP-' + crypto.randomUUID();
+  new bootstrap.Modal(document.getElementById('suppPayModal')).show();
+}
+</script>
+{% endblock %}

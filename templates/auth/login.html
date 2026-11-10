@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión — CityPet Pharma</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/citypet_logo.png') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/citypet.css') }}">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0A3D69 0%, #0F5B9E 50%, #155E75 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .login-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card p-4 p-sm-5">
+  <div class="text-center mb-4">
+    <img src="{{ url_for('static', filename='img/citypet_logo.png') }}" alt="CityPet Logo" style="max-height: 72px;">
+    <h1 class="h5 fw-bold text-dark mt-3 mb-1">Acceso al Sistema</h1>
+    <p class="text-muted small">Gestión Comercial e Inventario Veterinario</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show small py-2" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label class="form-label small fw-semibold text-secondary">Nombre de usuario</label>
+      <div class="input-group">
+        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+        <input type="text" name="username" class="form-control border-start-0" placeholder="Ej. admin" required autofocus>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label small fw-semibold text-secondary">Contraseña</label>
+      <div class="input-group">
+        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+        <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+        <label class="form-check-label small text-secondary" for="rememberMe">Recordarme</label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-citypet-primary w-100 py-2 fw-semibold shadow-sm">
+      <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+    </button>
+  </form>
+
+  <div class="mt-4 pt-3 text-center border-top">
+    <small class="text-muted d-block">CityPet Pharma © {{ now.year }}</small>
+    <small class="text-muted" style="font-size: 0.72rem;">Salud especializada para tu mejor amigo</small>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

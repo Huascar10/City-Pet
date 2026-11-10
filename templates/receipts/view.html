@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Comprobante {{ receipt.receipt_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('receipts.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver a Comprobantes</a>
+      <h1 class="h3 fw-bold mb-0">Comprobante {{ receipt.receipt_number }}</h1>
+      <span class="badge {% if receipt.status == 'confirmado' %}bg-success{% else %}bg-danger{% endif %}">
+        {{ receipt.status|capitalize }}
+      </span>
+    </div>
+    <p class="text-muted small mb-0">Registro inmutable generado el {{ receipt.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <!-- Send to Telegram form -->
+    <form method="POST" action="{{ url_for('receipts.send_telegram', id=receipt.id) }}" class="d-inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+        <i class="bi bi-telegram"></i> Enviar Telegram
+      </button>
+    </form>
+    <a href="{{ url_for('receipts.download_pdf', id=receipt.id) }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+    </a>
+    <a href="{{ url_for('receipts.print_receipt', id=receipt.id) }}" target="_blank" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-printer"></i> Imprimir Factura
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Receipt Meta Information Card -->
+  <div class="col-lg-4">
+    <div class="card citypet-card border-0 p-4 mb-4">
+      <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-info-circle me-2"></i>Información General</h5>
+      <ul class="list-group list-group-flush small">
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Nº de Comprobante:</span>
+          <span class="fw-bold">{{ receipt.receipt_number }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Tipo de Operación:</span>
+          <span class="badge bg-light text-dark border">{{ receipt.receipt_type }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Cliente / Receptor:</span>
+          <span class="fw-semibold">{{ receipt.client_name_snapshot or 'Consumidor Final' }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">RUC / Cédula:</span>
+          <span>{{ receipt.client_ruc_snapshot or 'N/A' }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Código Cliente:</span>
+          <span>{{ receipt.client_code_snapshot or 'N/A' }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Vendedor Responsable:</span>
+          <span>{{ receipt.salesperson_snapshot or 'Mostrador' }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Método de Pago:</span>
+          <span>{{ receipt.payment_method }} ({{ receipt.payment_condition }})</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between px-0">
+          <span class="text-muted">Usuario Emisor:</span>
+          <span>{{ receipt.user.full_name if receipt.user else 'Sistema' }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Items Table Card -->
+  <div class="col-lg-8">
+    <div class="card citypet-card border-0 p-4">
+      <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-list-check me-2"></i>Detalle de Artículos (Instantánea Inmutable)</h5>
+      
+      <div class="table-responsive mb-4">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Producto</th>
+              <th class="text-center">Cant.</th>
+              <th class="text-end">Precio Unit.</th>
+              <th class="text-center">Desc.</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in receipt.payload.get('items', []) %}
+            <tr>
+              <td><code>{{ it.code }}</code></td>
+              <td class="fw-semibold">{{ it.name }}</td>
+              <td class="text-center fw-bold">{{ (it.quantity or 0)|int }}</td>
+              <td class="text-end">{{ currency }} {{ "{:,.2f}".format((it.unit_price or it.unit_cost or 0.0)|float) }}</td>
+              <td class="text-center text-muted">{{ "{:,.0f}".format((it.discount_percent or 0.0)|float) }}%</td>
+              <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format((it.total or 0.0)|float) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-3 text-muted">Sin artículos detallados en la carga.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals box -->
+      <div class="card bg-light border-0 p-3 ms-auto" style="max-width: 350px;">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Subtotal:</span>
+          <span class="fw-semibold">{{ currency }} {{ "{:,.2f}".format((receipt.subtotal or 0.0)|float) }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Descuento:</span>
+          <span class="text-danger fw-semibold">-{{ currency }} {{ "{:,.2f}".format((receipt.discount_amount or 0.0)|float) }}</span>
+        </div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-bold">Total Cancelado:</span>
+          <span class="fs-5 fw-bold text-primary">{{ currency }} {{ "{:,.2f}".format((receipt.total_amount or 0.0)|float) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

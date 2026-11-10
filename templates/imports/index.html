@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Importación y Conciliación Excel{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Importación y Conciliación de Base de Datos Excel</h1>
+    <p class="text-muted small mb-0">Vista previa antes de importar, detección de duplicados y recuperación íntegra de clientes, proveedores y movimientos</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Section 1: Master Excel Synchronization with Pre-Import Preview -->
+  <div class="col-lg-7">
+    <div class="card citypet-card border-0 p-4 h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-success-subtle p-3 text-success">
+            <i class="bi bi-file-earmark-spreadsheet-fill fs-2"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold mb-0">Base de Datos Maestra Oficial</h5>
+            <small class="text-muted"><code>INVENTARIO NUEVO.xlsx</code> ({{ master_file_size }})</small>
+          </div>
+        </div>
+        {% if master_file_exists %}
+        <span class="badge bg-success-subtle text-success border border-success-subtle">Archivo Verificado</span>
+        {% endif %}
+      </div>
+
+      {% if master_preview %}
+      <!-- Vista Previa Antes de Importar (Section 4.1) -->
+      <div class="bg-light rounded border p-3 mb-3">
+        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-search me-1"></i>Vista Previa de Conciliación contra Base de Datos Actual</h6>
+        <div class="row g-2 small">
+          <div class="col-md-6">
+            <div class="p-2 bg-white rounded border">
+              <div class="fw-bold text-dark">Proveedores Detectados</div>
+              <div class="text-muted">
+                Nuevos: <strong class="text-success">{{ master_preview.suppliers.new|length }}</strong> |
+                Existentes: <strong>{{ master_preview.suppliers.existing|length }}</strong>
+              </div>
+              <small class="text-secondary d-block mt-1">
+                Compras por proveedor: Novavet ({{ master_preview.movements.by_supplier.get('Novavet', 0) }}), CampoVet ({{ master_preview.movements.by_supplier.get('CampoVet', 0) }})
+              </small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-2 bg-white rounded border">
+              <div class="fw-bold text-dark">Catálogo de Productos</div>
+              <div class="text-muted">
+                Nuevos: <strong class="text-success">{{ master_preview.products.new|length }}</strong> |
+                Existentes: <strong>{{ master_preview.products.existing|length }}</strong>
+              </div>
+              <small class="text-secondary d-block mt-1">
+                Conserva existencias operativas reales sin sobrescribirlas.
+              </small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-2 bg-white rounded border">
+              <div class="fw-bold text-dark">Directorio de Clientes</div>
+              <div class="text-muted">
+                Nuevos por crear: <strong class="text-success">{{ master_preview.clients.new|length }}</strong> |
+                Existentes: <strong>{{ master_preview.clients.existing|length }}</strong>
+              </div>
+              <small class="text-secondary d-block mt-1">
+                Filas reservadas/anuladas omitidas: {{ master_preview.clients.omitted|length }}
+              </small>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-2 bg-white rounded border">
+              <div class="fw-bold text-dark">Movimientos Históricos (Kardex)</div>
+              <div class="text-muted">
+                Nuevos: <strong class="text-success">{{ master_preview.movements.new_count }}</strong> |
+                Duplicados protegidos: <strong>{{ master_preview.movements.duplicates_existing_count }}</strong>
+              </div>
+              <small class="text-secondary d-block mt-1">
+                Enriquecimiento de metadatos (IVA, descuentos, proveedor): {{ master_preview.movements.metadata_updates_count }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <ul class="list-group list-group-flush small mb-4">
+        <li class="list-group-item px-0">
+          <i class="bi bi-check-circle-fill text-success me-2"></i><strong>Recuperación de Clientes:</strong> Importa clientes usando <em>Solo Razón Social</em> cuando el nombre principal está vacío.
+        </li>
+        <li class="list-group-item px-0">
+          <i class="bi bi-check-circle-fill text-success me-2"></i><strong>Múltiples Proveedores:</strong> Identifica y vincula tanto a <strong>Novavet</strong> como a <strong>CampoVet</strong>.
+        </li>
+        <li class="list-group-item px-0">
+          <i class="bi bi-check-circle-fill text-success me-2"></i><strong>Protección Antiduplicados:</strong> Si los movimientos históricos ya existen, actualiza sus metadatos fiscales y descuentos sin duplicar entradas ni alterar el stock actual.
+        </li>
+      </ul>
+
+      <div class="mt-auto">
+        {% if master_file_exists %}
+        <form method="POST" action="{{ url_for('imports.import_master') }}" onsubmit="return confirm('¿Confirmar la importación y conciliación transaccional desde INVENTARIO NUEVO.xlsx?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-citypet-primary w-100 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-arrow-repeat me-1"></i> Confirmar y Ejecutar Importación / Conciliación Maestra
+          </button>
+        </form>
+        {% else %}
+        <div class="alert alert-warning small mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i> El archivo <code>INVENTARIO NUEVO.xlsx</code> no se encuentra en el directorio raíz.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Custom Excel Uploader with preview & mapping -->
+  <div class="col-lg-5">
+    <div class="card citypet-card border-0 p-4 h-100">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="rounded-circle bg-primary-subtle p-3 text-primary">
+          <i class="bi bi-cloud-arrow-up-fill fs-2"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-0">Importador con Mapeo de Columnas</h5>
+          <small class="text-muted">Cargar otros archivos .xlsx o .xls</small>
+        </div>
+      </div>
+
+      <p class="small text-muted mb-3">
+        Permite cargar un archivo Excel externo, previsualizar sus hojas y registros antes de confirmar, y emparejar columnas con los campos de CityPet.
+      </p>
+
+      <form method="POST" action="{{ url_for('imports.preview_file') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Seleccionar archivo Excel (.xlsx / .xls)</label>
+          <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+          <small class="text-muted">Tamaño máximo permitido: 16 MB.</small>
+        </div>
+
+        <button type="submit" class="btn btn-outline-primary w-100 py-2 fw-semibold">
+          <i class="bi bi-eye me-1"></i> Previsualizar Hojas y Mapear Columnas
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

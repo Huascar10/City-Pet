@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Apariencia, Paletas y Logotipos — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Apariencia, Paletas y Logotipos</h1>
+    <p class="text-muted small mb-0">Personaliza la identidad visual del sistema web y los documentos de facturación</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="citypet-card p-4 mb-4">
+      <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">
+        <i class="bi bi-palette-fill me-1"></i> Modo de Visualización y Paletas de Color
+      </h5>
+      <form method="POST" action="{{ url_for('settings.appearance') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="save_theme">
+
+        <!-- Theme Mode -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Modo de Tema</label>
+          <div class="row g-2">
+            <div class="col-4">
+              <label class="citypet-card p-3 d-block text-center cursor-pointer border {% if settings.theme_mode == 'claro' %}border-primary border-2 bg-light{% endif %}">
+                <input type="radio" name="theme_mode" value="claro" class="form-check-input mb-2" {% if settings.theme_mode == 'claro' %}checked{% endif %}>
+                <div class="fw-semibold"><i class="bi bi-sun-fill text-warning me-1"></i> Claro</div>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">Fondo claro estándar</small>
+              </label>
+            </div>
+            <div class="col-4">
+              <label class="citypet-card p-3 d-block text-center cursor-pointer border {% if settings.theme_mode == 'oscuro' %}border-primary border-2 bg-light{% endif %}">
+                <input type="radio" name="theme_mode" value="oscuro" class="form-check-input mb-2" {% if settings.theme_mode == 'oscuro' %}checked{% endif %}>
+                <div class="fw-semibold"><i class="bi bi-moon-stars-fill text-primary me-1"></i> Oscuro</div>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">Protege la vista</small>
+              </label>
+            </div>
+            <div class="col-4">
+              <label class="citypet-card p-3 d-block text-center cursor-pointer border {% if settings.theme_mode == 'sistema' %}border-primary border-2 bg-light{% endif %}">
+                <input type="radio" name="theme_mode" value="sistema" class="form-check-input mb-2" {% if settings.theme_mode == 'sistema' %}checked{% endif %}>
+                <div class="fw-semibold"><i class="bi bi-display me-1"></i> Sistema</div>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">Automático del SO</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Palette Presets -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Paleta de Colores de la Marca</label>
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="citypet-card p-2 d-flex align-items-center gap-2 border cursor-pointer">
+                <input type="radio" name="color_preset" value="veterinario" class="form-check-input" 
+                       {% if settings.color_preset == 'veterinario' %}checked{% endif %}
+                       onchange="applyPresetColors('#1B4965', '#62B6CB')">
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #1B4965;"></span>
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #62B6CB;"></span>
+                <div>
+                  <span class="fw-semibold small d-block">Azul Médico (Original)</span>
+                </div>
+              </label>
+            </div>
+            <div class="col-md-6">
+              <label class="citypet-card p-2 d-flex align-items-center gap-2 border cursor-pointer">
+                <input type="radio" name="color_preset" value="esmeralda" class="form-check-input"
+                       {% if settings.color_preset == 'esmeralda' %}checked{% endif %}
+                       onchange="applyPresetColors('#2D6A4F', '#52B788')">
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #2D6A4F;"></span>
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #52B788;"></span>
+                <div>
+                  <span class="fw-semibold small d-block">Verde Selva / Salud</span>
+                </div>
+              </label>
+            </div>
+            <div class="col-md-6">
+              <label class="citypet-card p-2 d-flex align-items-center gap-2 border cursor-pointer">
+                <input type="radio" name="color_preset" value="purpura" class="form-check-input"
+                       {% if settings.color_preset == 'purpura' %}checked{% endif %}
+                       onchange="applyPresetColors('#5A189A', '#9D4EDD')">
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #5A189A;"></span>
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #9D4EDD;"></span>
+                <div>
+                  <span class="fw-semibold small d-block">Púrpura Real</span>
+                </div>
+              </label>
+            </div>
+            <div class="col-md-6">
+              <label class="citypet-card p-2 d-flex align-items-center gap-2 border cursor-pointer">
+                <input type="radio" name="color_preset" value="naranja" class="form-check-input"
+                       {% if settings.color_preset == 'naranja' %}checked{% endif %}
+                       onchange="applyPresetColors('#C25900', '#F59E0B')">
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #C25900;"></span>
+                <span class="d-inline-block rounded-circle" style="width: 22px; height: 22px; background: #F59E0B;"></span>
+                <div>
+                  <span class="fw-semibold small d-block">Naranja Cálido</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Pickers -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Color Primario (Sidebar y Botones)</label>
+            <div class="input-group">
+              <input type="color" class="form-control form-control-color" id="primaryPicker" name="primary_color" value="{{ settings.primary_color }}">
+              <input type="text" class="form-control" id="primaryHex" value="{{ settings.primary_color }}" oninput="document.getElementById('primaryPicker').value = this.value">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Color Secundario / Acento</label>
+            <div class="input-group">
+              <input type="color" class="form-control form-control-color" id="secondaryPicker" name="secondary_color" value="{{ settings.secondary_color }}">
+              <input type="text" class="form-control" id="secondaryHex" value="{{ settings.secondary_color }}" oninput="document.getElementById('secondaryPicker').value = this.value">
+            </div>
+          </div>
+        </div>
+
+        <!-- Logo Uploads -->
+        <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary pt-2">
+          <i class="bi bi-image me-1"></i> Logotipos del Negocio
+        </h5>
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">Logotipo del Sistema Web</label>
+          <input type="file" class="form-control" name="system_logo" accept="image/*">
+          <small class="text-muted">Se mostrará en la barra lateral y superior del sistema (PNG, JPG, SVG).</small>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">Logotipo para Facturas y Recibos Impresos</label>
+          <input type="file" class="form-control" name="receipt_logo" accept="image/*">
+          <small class="text-muted">Se estampará en el membrete de las facturas impresas y recibos PDF.</small>
+        </div>
+
+        <button type="submit" class="btn btn-citypet-primary btn-lg w-100 fw-bold">
+          <i class="bi bi-save"></i> Guardar Cambios de Apariencia
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Preview and Logo Reset Column -->
+  <div class="col-lg-5">
+    <div class="citypet-card p-4 mb-4">
+      <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">Logotipos Actuales en Uso</h5>
+
+      <div class="mb-4">
+        <label class="small text-muted fw-bold d-block mb-2">Logotipo Web Actual:</label>
+        <div class="bg-dark p-3 rounded text-center border">
+          <img src="{{ settings.system_logo_url }}" alt="Logo Sistema" style="max-height: 60px; object-fit: contain;">
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="small text-muted fw-bold d-block mb-2">Logotipo Facturas/Recibos Actual:</label>
+        <div class="bg-white p-3 rounded text-center border">
+          <img src="{{ settings.receipt_logo_url }}" alt="Logo Recibo" style="max-height: 60px; object-fit: contain;">
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('settings.appearance') }}" class="mb-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="reset_logos">
+        <button type="submit" class="btn btn-outline-danger w-100 fw-semibold" onclick="return confirm('¿Restablecer el logotipo original de CityPet Pharma extraído de la factura oficial?')">
+          <i class="bi bi-arrow-counterclockwise"></i> Restablecer Logotipo Original
+        </button>
+      </form>
+
+      <form method="POST" action="{{ url_for('settings.appearance') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="reset_palette">
+        <button type="submit" class="btn btn-outline-secondary w-100 fw-semibold" onclick="return confirm('¿Restablecer la paleta de colores azul médico oficial (#1B4965 / #62B6CB)?')">
+          <i class="bi bi-palette"></i> Restablecer Paleta Oficial
+        </button>
+      </form>
+    </div>
+
+    <!-- Live Preview Card -->
+    <div class="citypet-card p-4">
+      <h5 class="fw-bold mb-3 border-bottom pb-2">Previsualización de Componentes</h5>
+      <p class="small text-muted">Así lucirán los botones y tarjetas con la combinación seleccionada:</p>
+      
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-citypet-primary" id="demoPrimaryBtn">Botón Principal</button>
+        <button class="btn btn-citypet-teal" id="demoSecondaryBtn">Botón Secundario</button>
+      </div>
+
+      <div class="metric-card success p-3 bg-light border">
+        <div class="metric-label">Métrica de Muestra</div>
+        <div class="metric-value text-success mt-1">{{ currency }} 12,450.00</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function applyPresetColors(primary, secondary) {
+  document.getElementById('primaryPicker').value = primary;
+  document.getElementById('primaryHex').value = primary;
+  document.getElementById('secondaryPicker').value = secondary;
+  document.getElementById('secondaryHex').value = secondary;
+
+  document.getElementById('demoPrimaryBtn').style.backgroundColor = primary;
+  document.getElementById('demoPrimaryBtn').style.borderColor = primary;
+  document.getElementById('demoSecondaryBtn').style.backgroundColor = secondary;
+  document.getElementById('demoSecondaryBtn').style.borderColor = secondary;
+}
+
+document.getElementById('primaryPicker').addEventListener('input', function(e) {
+  document.getElementById('primaryHex').value = e.target.value;
+  document.getElementById('demoPrimaryBtn').style.backgroundColor = e.target.value;
+  document.getElementById('demoPrimaryBtn').style.borderColor = e.target.value;
+});
+
+document.getElementById('secondaryPicker').addEventListener('input', function(e) {
+  document.getElementById('secondaryHex').value = e.target.value;
+  document.getElementById('demoSecondaryBtn').style.backgroundColor = e.target.value;
+  document.getElementById('demoSecondaryBtn').style.borderColor = e.target.value;
+});
+</script>
+{% endblock %}

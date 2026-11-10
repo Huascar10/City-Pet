@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Respaldos y Recuperación{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 fw-bold mb-1"><i class="bi bi-database-check text-primary me-2"></i>Respaldos Relacionales Completos y Restauración</h1>
+        <p class="text-muted small mb-0">Respaldo íntegro de las 16 tablas del sistema, archivos multimedia y verificación en base de datos aislada</p>
+      </div>
+    </div>
+
+    <!-- 1. Complete Relational Backup Generator Card -->
+    <div class="card citypet-card border-0 p-4 mb-4">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-3">
+        <div>
+          <h5 class="fw-bold mb-1 text-primary"><i class="bi bi-download me-2"></i>1. Generar Respaldo Completo del Sistema</h5>
+          <p class="text-muted small mb-0">
+            Incluye todas las tablas relacionales: <strong>usuarios, configuración, clientes, proveedores, productos, ventas, detalle de ventas, abonos, excepciones de crédito, compras, detalle de compras, pagos a proveedores, kardex de inventario, movimientos financieros, recibos, auditoría e imágenes/logos</strong> con firma criptográfica SHA-256.
+          </p>
+        </div>
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="export_json">
+          <button type="submit" class="btn btn-citypet-primary px-4 py-2 shadow-sm text-nowrap">
+            <i class="bi bi-cloud-download me-1"></i> Descargar Respaldo Completo
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. Isolated Backup Verification Card -->
+    <div class="card citypet-card border-0 p-4 mb-4">
+      <h5 class="fw-bold mb-1 text-success"><i class="bi bi-shield-check me-2"></i>2. Verificar Respaldo en Base de Datos de Prueba Aislada</h5>
+      <p class="text-muted small mb-3">
+        Comprueba la firma SHA-256 y simula una restauración completa en una base de datos en memoria aislada sin tocar los datos reales.
+      </p>
+      <form method="POST" action="{{ url_for('settings.verify_backup') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="flex-grow-1">
+          <input type="file" name="backup_file" class="form-control" accept=".json" required>
+        </div>
+        <button type="submit" class="btn btn-outline-success fw-semibold">
+          <i class="bi bi-check2-circle me-1"></i> Probar Integridad del Archivo
+        </button>
+      </form>
+    </div>
+
+    <!-- 3. Full Relational Restore Card -->
+    <div class="card citypet-card border-0 p-4 mb-4">
+      <h5 class="fw-bold mb-1 text-primary"><i class="bi bi-arrow-counterclockwise me-2"></i>3. Restaurar Sistema Completo desde Respaldo</h5>
+      <p class="text-muted small mb-3">
+        Valida primero el archivo en una base de datos aislada, genera un respaldo automático previo en <code>backups/</code> y restaura todas las tablas y relaciones sin pérdida de información.
+      </p>
+      <form method="POST" action="{{ url_for('settings.restore_backup') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="flex-grow-1">
+          <input type="file" name="backup_file" class="form-control" accept=".json" required>
+        </div>
+        <button type="submit" class="btn btn-primary fw-semibold" onclick="return confirm('¿Confirmas que deseas restaurar el respaldo completo? Se generará una copia automática previa por seguridad.')">
+          <i class="bi bi-upload me-1"></i> Ejecutar Restauración Completa
+        </button>
+      </form>
+    </div>
+
+    <!-- 4. Controlled Database Reset (Owner Only) -->
+    <div class="card citypet-card border-danger border-2 p-4 mb-4 bg-danger-subtle bg-opacity-10">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h5 class="fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Zona Protegida: Reinicio Controlado de Operaciones</h5>
+          <p class="text-muted small mb-0">
+            Limpia transacciones operativas (ventas, compras, abonos, movimientos, finanzas) conservando usuarios y configuración. Exige frase exacta, contraseña del propietario, respaldo previo íntegro y confirmación de Telegram.
+          </p>
+        </div>
+        <button type="button" class="btn btn-danger fw-bold d-flex align-items-center gap-2 shadow-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#resetDatabaseModal">
+          <i class="bi bi-trash3-fill"></i> Reiniciar Datos Operativos
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal: Reinicio Controlado -->
+    <div class="modal fade" id="resetDatabaseModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <form method="POST" action="{{ url_for('settings.reset_database') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title fw-bold"><i class="bi bi-shield-slash-fill me-2"></i>Confirmación de Reinicio Controlado</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+              <div class="alert alert-warning border small text-dark mb-3">
+                <i class="bi bi-info-circle-fill text-warning me-1"></i>
+                <strong>Atención:</strong> Esta acción limpiará ventas, compras, abonos, movimientos de caja y pondrá el stock de productos en 0.
+                <br><strong>Se conservan intactos:</strong> Los usuarios, contraseñas, roles y toda la configuración del sistema.
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">1. Escribe la frase de confirmación exacta:</label>
+                <div class="p-2 bg-light border rounded font-monospace text-center fw-bold mb-2 text-danger">
+                  BORRAR DATOS OPERATIVOS
+                </div>
+                <input type="text" name="confirmation_phrase" class="form-control" placeholder="Escribe aquí la frase exacta..." required autocomplete="off">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-bold">2. Contraseña del Usuario Propietario (Re-autenticación):</label>
+                <input type="password" name="password" class="form-control" placeholder="Ingresa tu contraseña actual..." required>
+              </div>
+
+              <div class="alert alert-secondary border small text-muted mb-0">
+                <i class="bi bi-telegram text-primary me-1"></i>
+                Se generará un respaldo completo verificado y se enviará una alerta de seguridad al bot de Telegram. <strong>Si la notificación falla, la operación se cancelará inmediatamente.</strong>
+              </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar y Salir</button>
+              <button type="submit" class="btn btn-danger fw-bold">
+                <i class="bi bi-trash3-fill me-1"></i> Proceder con el Reinicio
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backup Log Card -->
+    <div class="card citypet-card border-0 p-4">
+      <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-clock-history me-2"></i>Bitácora de Respaldos, Verificaciones y Restauraciones</h5>
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Acción</th>
+              <th>Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in backup_logs %}
+            <tr>
+              <td class="small text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+              <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+              <td class="small text-muted">{{ log.details }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center py-4 text-muted small">No hay registros previos en la bitácora de respaldos.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

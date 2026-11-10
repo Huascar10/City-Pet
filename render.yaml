@@ -1,0 +1,68 @@
+# Render Blueprint Reference for CityPet Pharma (Two Isolated Environments)
+# Note: Database (PostgreSQL) and Storage are hosted on two independent Supabase projects.
+services:
+  # 1. STAGING / TESTING ENVIRONMENT (Branch: staging)
+  - type: web
+    name: citypet-testing
+    runtime: python
+    branch: staging
+    plan: free
+    buildCommand: pip install -r requirements.txt && flask sync-schema
+    startCommand: gunicorn app:app --workers 2 --threads 2 --timeout 120
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: FLASK_CONFIG
+        value: staging
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: citypet-staging-media
+      - key: TELEGRAM_ENABLED
+        value: "false"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+
+  # 2. PRODUCTION ENVIRONMENT (Branch: main)
+  - type: web
+    name: citypet-production
+    runtime: python
+    branch: main
+    plan: starter
+    buildCommand: pip install -r requirements.txt && flask sync-schema
+    startCommand: gunicorn app:app --workers 2 --threads 2 --timeout 120
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: FLASK_CONFIG
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: citypet-production-media
+      - key: TELEGRAM_ENABLED
+        value: "true"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

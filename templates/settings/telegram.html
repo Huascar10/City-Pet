@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Configuración de Telegram{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 fw-bold mb-1"><i class="bi bi-telegram text-primary me-2"></i>Integración Segura con Telegram</h1>
+        <p class="text-muted small mb-0">Alertas instantáneas de ventas, compras, inventario y reportes con credenciales cifradas en reposo</p>
+      </div>
+    </div>
+
+    <!-- Instructions Banner -->
+    <div class="card citypet-card border-0 mb-4 p-3 bg-light">
+      <div class="d-flex gap-3">
+        <i class="bi bi-shield-lock-fill text-success fs-3"></i>
+        <div class="small">
+          <strong>Seguridad de Credenciales (Cifrado en Reposo):</strong><br>
+          El <strong>Bot Token</strong> se almacena cifrado mediante clave criptográfica externa (`ENCv1`) y nunca se expone en texto plano en la interfaz ni en los registros del sistema.<br>
+          Para mantener el token actual, deje el campo en blanco o con la máscara de seguridad.
+        </div>
+      </div>
+    </div>
+
+    <!-- Telegram Settings Form -->
+    <div class="card citypet-card border-0 p-4 mb-4">
+      <form method="POST" action="{{ url_for('settings.telegram') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-key-fill me-2"></i>Credenciales de Conexión</h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-7">
+            <label class="form-label small fw-semibold">
+              Bot Token de Telegram
+              {% if config.has_token %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle ms-1"><i class="bi bi-lock-fill"></i> Token Cifrado Guardado</span>
+              {% else %}
+              <span class="badge bg-secondary-subtle text-secondary border ms-1">Sin configurar</span>
+              {% endif %}
+            </label>
+            <input type="password" name="bot_token" id="bot_token" class="form-control" value="" placeholder="{% if config.has_token %}{{ config.bot_token_masked }} (Dejar vacío para conservar){% else %}Ej: 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ{% endif %}" autocomplete="new-password">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small fw-semibold">Chat ID (Grupo, Canal o Personal)</label>
+            <input type="text" name="chat_id" id="chat_id" class="form-control" value="{{ config.chat_id }}" placeholder="Ej: -1001234567890">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded border mb-4">
+          <div>
+            <div class="fw-bold">Estado General del Servicio de Notificaciones</div>
+            <small class="text-muted">Activar o pausar temporalmente todos los envíos de Telegram.</small>
+          </div>
+          <div class="form-check form-switch fs-5">
+            <input class="form-check-input" type="checkbox" name="enabled" value="1" {% if config.enabled %}checked{% endif %}>
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-bell-fill me-2"></i>Eventos y Alertas Individuales</h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_sales" id="notify_sales" value="1" {% if config.notify_sales %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_sales">
+                Notificar cada Venta emitida
+                <small class="d-block text-muted fw-normal">Envía el número de factura, cliente y total al emitir.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_purchases" id="notify_purchases" value="1" {% if config.notify_purchases %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_purchases">
+                Notificar Compras a Proveedores
+                <small class="d-block text-muted fw-normal">Aviso de recepción de mercancía, abonos y saldos por pagar.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_finances" id="notify_finances" value="1" {% if config.notify_finances %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_finances">
+                Notificar Cobros y Pagos a Proveedores
+                <small class="d-block text-muted fw-normal">Avisos de abonos de clientes y liquidación de cuentas.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_in" id="notify_in" value="1" {% if config.notify_inventory_in %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_in">
+                Entradas de Inventario y Ajustes
+                <small class="d-block text-muted fw-normal">Devoluciones y ajustes físicos auditables.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_low_stock" id="notify_low_stock" value="1" {% if config.notify_low_stock %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_low_stock">
+                Alertas de Stock Bajo
+                <small class="d-block text-muted fw-normal">Cuando un producto cae por debajo de su stock mínimo.</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-check p-3 border rounded bg-white">
+              <input class="form-check-input ms-0 me-2" type="checkbox" name="notify_out_stock" id="notify_out_stock" value="1" {% if config.notify_out_stock %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold" for="notify_out_stock">
+                Alertas de Stock Agotado (0 unids)
+                <small class="d-block text-muted fw-normal">Aviso inmediato de quiebre total de producto.</small>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <button type="submit" name="action" value="test_connection" class="btn btn-outline-primary">
+            <i class="bi bi-send me-1"></i> Probar Conexión
+          </button>
+          
+          <button type="submit" name="action" value="save" class="btn btn-citypet-primary px-4 shadow-sm">
+            <i class="bi bi-save me-1"></i> Guardar Configuración Cifrada
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Factura Nº {{ receipt.receipt_number }} — CityPet Pharma</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/citypet_logo.png') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    @page {
+      size: letter;
+      margin: 12mm 15mm;
+    }
+    body {
+      background-color: #F8FAFC;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1E293B;
+    }
+    .invoice-card {
+      background: #FFFFFF;
+      max-width: 820px;
+      margin: 20px auto;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      position: relative;
+    }
+    .company-info-box {
+      background-color: #EEF5F8;
+      border: 1px solid #D6E4EB;
+      border-radius: 16px;
+      padding: 12px 18px;
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+    .invoice-title {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      color: #111827;
+    }
+    .client-data-box {
+      border: 1.5px solid #0F5B9E;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 0.88rem;
+    }
+    .client-data-box .underline-fill {
+      border-bottom: 1px solid #0F5B9E;
+      display: inline-block;
+      min-width: 150px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+    .pill-header {
+      background-color: #0F5B9E;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-align: center;
+      display: inline-block;
+      width: 100%;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .items-table th {
+      padding: 4px;
+      border: none;
+    }
+    .items-table td {
+      border: 1px solid #E2E8F0;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      background-color: #FFFFFF;
+    }
+    .items-table tbody tr:nth-child(even) td {
+      background-color: #F8FAFC;
+    }
+    .totals-pill {
+      background-color: #0F5B9E;
+      color: #FFFFFF;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .cuota-fija-badge {
+      border: 1.5px solid #0F5B9E;
+      color: #0F5B9E;
+      font-weight: 800;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      display: inline-block;
+    }
+    .signatures-box {
+      background-color: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+    .legal-clause {
+      background-color: #F1F5F9;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      color: #475569;
+      margin-top: 16px;
+    }
+    @media print {
+      body {
+        background-color: #FFFFFF !important;
+        padding: 0 !important;
+      }
+      .invoice-card {
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        padding: 10px 15px !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Control Bar (hidden in print) -->
+<div class="no-print py-3 bg-dark text-white mb-2 shadow-sm">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <a href="{{ url_for('receipts.index') }}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Volver a Comprobantes
+      </a>
+      <span class="fw-semibold">Factura {{ receipt.receipt_number }}</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button onclick="window.print()" class="btn btn-success btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-printer-fill"></i> Imprimir Factura
+      </button>
+      <a href="{{ url_for('receipts.download_pdf', id=receipt.id) }}" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Card (Printed replica) -->
+<div class="invoice-card">
+  <!-- Header Row -->
+  <div class="row align-items-center mb-3">
+    <div class="col-6">
+      <img src="{{ url_for('static', filename='img/citypet_logo.png') }}" alt="CityPet Pharma" style="max-height: 85px;">
+    </div>
+    <div class="col-6">
+      <div class="company-info-box float-end" style="max-width: 340px;">
+        <div class="fw-bold fs-6 text-dark">RUC: {{ company_ruc }}</div>
+        <div class="text-secondary mt-1">Dirección: Col. Cristian Pérez, ddf el Cine Rex 50 vrs. al Norte</div>
+        <div class="text-secondary">Tel.: (+505) 8363-7606</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Factura Title & Number -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="invoice-title">FACTURA</div>
+    <div class="fs-4 fw-bold text-dark">
+      № <span class="text-primary">{{ receipt.receipt_number.replace('FACT-', '') }}</span>
+    </div>
+  </div>
+
+  <!-- Client & Transaction Info Box -->
+  <div class="client-data-box mb-3">
+    <div class="row g-2">
+      <div class="col-8">
+        <div class="mb-1">
+          <span class="fw-bold">Cliente:</span> 
+          <span class="underline-fill" style="min-width: 320px;">{{ receipt.client_name_snapshot or 'Consumidor Final' }}</span>
+        </div>
+        <div class="mb-1">
+          <span class="fw-bold">Ruc:</span> 
+          <span class="underline-fill" style="min-width: 200px;">{{ receipt.client_ruc_snapshot or 'N/A' }}</span>
+        </div>
+        <div class="mb-1">
+          <span class="fw-bold">Dirección:</span> 
+          <span class="underline-fill" style="min-width: 300px;">{{ receipt.client_address_snapshot or 'Managua, Nicaragua' }}</span>
+        </div>
+        <div class="mb-1">
+          <span class="fw-bold">Vendedor:</span> 
+          <span class="underline-fill" style="min-width: 250px;">{{ receipt.salesperson_snapshot or 'Mostrador' }}</span>
+        </div>
+        <div>
+          <span class="fw-bold">Código cliente:</span> 
+          <span class="underline-fill" style="min-width: 180px;">{{ receipt.client_code_snapshot or 'N/A' }}</span>
+        </div>
+      </div>
+
+      <div class="col-4 border-start ps-3">
+        <div class="mb-2">
+          <span class="fw-bold">Nº factura:</span>
+          <div class="fw-bold fs-6 text-primary">{{ receipt.receipt_number.replace('FACT-', '') }}</div>
+        </div>
+        <div class="mb-2">
+          <span class="fw-bold">Fecha:</span>
+          <div class="badge bg-light text-dark border px-2 py-1 fs-6">
+            {{ receipt.created_at.strftime('%d / %m / %Y') if receipt.created_at else '' }}
+          </div>
+        </div>
+        <div>
+          <span class="fw-bold">Forma de pago:</span>
+          <div class="small fw-semibold text-secondary">{{ receipt.payment_method or 'Efectivo' }} ({{ receipt.payment_condition or 'Contado' }})</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Items Table with Pill Headers -->
+  <table class="items-table mb-2">
+    <thead>
+      <tr>
+        <th style="width: 14%;"><span class="pill-header">Código</span></th>
+        <th style="width: 44%;"><span class="pill-header text-start ps-3">Producto</span></th>
+        <th style="width: 12%;"><span class="pill-header">Cantidad</span></th>
+        <th style="width: 14%;"><span class="pill-header">Precio Unit.</span></th>
+        <th style="width: 10%;"><span class="pill-header">DSCTO.</span></th>
+        <th style="width: 14%;"><span class="pill-header">Total</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set items = receipt.payload.get('items', []) %}
+      {% for item in items %}
+      <tr>
+        <td class="text-center font-monospace fw-semibold">{{ item.code }}</td>
+        <td class="fw-semibold">{{ item.name }}</td>
+        <td class="text-center fw-bold">{{ (item.quantity or 0)|int }}</td>
+        <td class="text-end">{{ currency }} {{ "{:,.2f}".format((item.unit_price or item.unit_cost or 0.0)|float) }}</td>
+        <td class="text-center text-muted">{{ "{:,.0f}".format((item.discount_percent or 0.0)|float) }}%</td>
+        <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format((item.total or 0.0)|float) }}</td>
+      </tr>
+      {% endfor %}
+
+      <!-- Fill blank lines if fewer than 6 items for realistic invoice appearance -->
+      {% for i in range(6 - items|length) %}
+      <tr>
+        <td style="height: 24px;">&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Subtotal, Cuota Fija & Total Row -->
+  <div class="row align-items-center mb-3 g-2">
+    <div class="col-4">
+      <span class="cuota-fija-badge">CUOTA FIJA</span>
+    </div>
+    <div class="col-8">
+      <div class="d-flex justify-content-end align-items-center gap-3">
+        <div class="text-end me-2">
+          <div class="small text-muted">SUBTOTAL:</div>
+          <div class="fw-semibold">{{ currency }} {{ "{:,.2f}".format((receipt.subtotal or 0.0)|float) }}</div>
+        </div>
+        {% if (receipt.discount_amount or 0) > 0 %}
+        <div class="text-end me-2">
+          <div class="small text-danger">DESCUENTO:</div>
+          <div class="fw-semibold text-danger">-{{ currency }} {{ "{:,.2f}".format((receipt.discount_amount or 0.0)|float) }}</div>
+        </div>
+        {% endif %}
+        <div class="totals-pill d-flex align-items-center gap-2">
+          <span>TOTAL:</span>
+          <span>{{ currency }} {{ "{:,.2f}".format((receipt.total_amount or 0.0)|float) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatures Block -->
+  <div class="signatures-box">
+    <div class="row text-center">
+      <div class="col-6">
+        <div class="fw-bold small mb-4">Entregué conforme</div>
+        <div class="border-top border-dark mx-auto pt-1" style="max-width: 220px;">
+          <small class="text-muted d-block">Nombre y Nº cédula</small>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="fw-bold small mb-4">Recibí conforme</div>
+        <div class="border-top border-dark mx-auto pt-1" style="max-width: 220px;">
+          <small class="text-muted d-block">Nombre y Nº cédula</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legal Promissory Note Clause (CityPet Pharma Page 2 Terms) -->
+  <div class="legal-clause">
+    <strong>Pagaré / Compromiso:</strong> Yo _______________________________________ Acepto deber a <strong>Marbelly Mejía Espinoza</strong> la cantidad expresada en el contenido de este documento, la cual me comprometo a cancelar en tiempo y forma, de lo contrario, reconoceré la taza de interés sobre el saldo monetario, publicado por el <strong>BANCO CENTRAL DE NICARAGUA</strong>, vigente a la fecha en que el documento se encuentre. Esta factura será cancelada con mantenimiento de valor conforme el <strong>Arto. 38 de la ley 732</strong>, ley orgánica del <strong>BANCO CENTRAL DE NICARAGUA</strong>.
+  </div>
+
+  <!-- Footnote -->
+  <div class="text-muted text-center mt-2" style="font-size: 0.65rem;">
+    Lit. El Renacimiento RUC: 0011707600068X AIMP/85/0017/04-2026 6B 50J (3) 0501 - 0800 Ago/2026
+  </div>
+</div>
+
+</body>
+</html>

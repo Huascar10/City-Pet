@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Ventas y Facturas{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Historial de Ventas y Facturación</h1>
+    <p class="text-muted small mb-0">Listado cronológico de comprobantes y facturas emitidas</p>
+  </div>
+  <a href="{{ url_for('sales.pos') }}" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+    <i class="bi bi-cart-plus"></i> Nueva Venta (POS)
+  </a>
+</div>
+
+<!-- Filters Toolbar -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Buscar por Nº factura, cliente o vendedor..." value="{{ search }}">
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">Todos los estados</option>
+        <option value="confirmada" {% if status == 'confirmada' %}selected{% endif %}>Confirmadas</option>
+        <option value="anulada" {% if status == 'anulada' %}selected{% endif %}>Anuladas</option>
+      </select>
+    </div>
+
+    <div class="col-md-3 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+      {% if search or status %}
+      <a href="{{ url_for('sales.index') }}" class="btn btn-sm btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Sales Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Factura Nº</th>
+          <th>Fecha y Hora</th>
+          <th>Cliente</th>
+          <th>Vendedor</th>
+          <th>Método de Pago</th>
+          <th class="text-end">Subtotal</th>
+          <th class="text-end">Descuento</th>
+          <th class="text-end">Total</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales %}
+        <tr class="{% if s.status == 'anulada' %}bg-light opacity-75{% endif %}">
+          <td class="fw-bold">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+              #{{ s.invoice_number }}
+            </span>
+          </td>
+          <td class="small text-muted">{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 220px;" title="{{ s.client_name }}">
+            {{ s.client_name }}
+            {% if s.client_code %}<small class="text-muted d-block" style="font-size: 0.72rem;">{{ s.client_code }}</small>{% endif %}
+          </td>
+          <td class="small text-muted">{{ s.salesperson or 'Mostrador' }}</td>
+          <td class="small">{{ s.payment_method }} <span class="text-muted" style="font-size: 0.72rem;">({{ s.payment_condition }})</span></td>
+          <td class="text-end text-muted small">{{ currency }} {{ "{:,.2f}".format(s.subtotal) }}</td>
+          <td class="text-end text-danger small">-{{ currency }} {{ "{:,.2f}".format(s.discount_amount) }}</td>
+          <td class="text-end fw-bold fs-6 text-dark">{{ currency }} {{ "{:,.2f}".format(s.total) }}</td>
+          <td class="text-center">
+            {% if s.status == 'confirmada' %}
+            <span class="badge badge-status-ok">Confirmada</span>
+            {% else %}
+            <span class="badge badge-status-danger">Anulada</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <!-- Direct view receipt / invoice details -->
+              <a href="{{ url_for('receipts.view_receipt', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-primary" title="Ver Detalle Factura">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('receipts.print_receipt', id=(s.receipt_id or s.id)) }}" target="_blank" class="btn btn-outline-secondary" title="Imprimir Factura">
+                <i class="bi bi-printer"></i>
+              </a>
+              {% if s.status == 'confirmada' %}
+              <button type="button" class="btn btn-outline-danger" title="Anular Factura"
+                onclick="openVoidSaleModal('{{ s.id }}', '{{ s.invoice_number }}', '{{ s.client_name|escape }}', '{{ s.total }}')">
+                <i class="bi bi-x-circle"></i>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="text-center py-5 text-muted">No se encontraron ventas registradas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Anular Venta -->
+<div class="modal fade" id="voidSaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="voidSaleForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-octagon me-2"></i>Anular Factura de Venta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-3">
+            Está a punto de anular la factura <strong id="voidInvoiceSpan"></strong> de <span id="voidClientSpan"></span> por un valor de <strong>{{ currency }} <span id="voidTotalSpan"></span></strong>.
+          </p>
+          <div class="alert alert-warning small mb-3">
+            <i class="bi bi-info-circle me-1"></i> Esta acción devolverá automáticamente todos los productos vendidos al inventario y registrará un movimiento financiero de egreso para anular el cobro.
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Motivo de anulación *</label>
+            <textarea name="reason" class="form-control" rows="3" placeholder="Explique la razón de la anulación (ej. error en factura, cancelación de pedido)..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger px-4">Confirmar Anulación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openVoidSaleModal(id, invoiceNum, clientName, total) {
+  const form = document.getElementById('voidSaleForm');
+  form.action = `/sales/${id}/void`;
+  document.getElementById('voidInvoiceSpan').textContent = '#' + invoiceNum;
+  document.getElementById('voidClientSpan').textContent = clientName;
+  document.getElementById('voidTotalSpan').textContent = parseFloat(total).toLocaleString(undefined, {minimumFractionDigits: 2});
+  new bootstrap.Modal(document.getElementById('voidSaleModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Compra — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Registrar Compra a Proveedor</h1>
+    <p class="text-muted small mb-0">Recepción de productos, incremento de existencias, control de costos y cuentas por pagar</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+    <a href="{{ url_for('purchases.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver a Compras
+    </a>
+  </div>
+</div>
+
+<form id="purchaseForm" method="POST" action="{{ url_for('purchases.create') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="idempotency_token" id="purchaseIdempotency">
+  <input type="hidden" name="items" id="itemsJson">
+
+  <div class="row g-3">
+    <!-- Header info -->
+    <div class="col-lg-8">
+      <div class="citypet-card p-3 mb-3">
+        <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">
+          <i class="bi bi-truck me-1"></i> Información del Proveedor y Factura
+        </h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Proveedor *</label>
+            <select class="form-select" name="supplier_id" id="supplierSelect" required>
+              <option value="">Seleccione un proveedor...</option>
+              {% for s in suppliers %}
+              <option value="{{ s.id }}" data-ruc="{{ s.ruc }}" data-debt="{{ s.total_debt }}">
+                {{ s.company_name }} ({{ s.code }}){% if s.total_debt > 0 %} — Deuda actual: {{ currency }} {{ "{:,.2f}".format(s.total_debt) }}{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">No. Factura/Remisión del Proveedor</label>
+            <input type="text" class="form-control" name="supplier_invoice_number" id="supplierInvoice" placeholder="Ej: FAC-000289">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Condición de Pago *</label>
+            <select class="form-select" name="payment_condition" id="paymentCondition" onchange="toggleCreditPurchaseFields()">
+              <option value="Contado" selected>Contado</option>
+              <option value="Crédito 15 días">Crédito 15 días</option>
+              <option value="Crédito 30 días">Crédito 30 días</option>
+              <option value="Crédito 60 días">Crédito 60 días</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Método de Pago *</label>
+            <select class="form-select" name="payment_method" id="paymentMethod">
+              <option value="Efectivo" selected>Efectivo</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Crédito">Crédito</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Bodega Destino</label>
+            <input type="text" class="form-control" name="warehouse" value="Principal">
+          </div>
+
+          <!-- Credit Purchase Fields (Accounts Payable) -->
+          <div class="col-12 d-none" id="creditPurchaseContainer">
+            <div class="bg-warning-subtle border border-warning rounded p-3">
+              <div class="fw-bold text-dark small mb-2">
+                <i class="bi bi-bank me-1"></i>Condiciones de Cuenta por Pagar a Proveedor
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Abono / Pago Inicial Entregado Hoy ({{ currency }})</label>
+                  <input type="number" step="0.01" min="0" class="form-control" name="initial_payment" id="initialPaymentInput" value="0.00" oninput="calculateTotals()">
+                  <div class="form-text small">Solo el monto pagado hoy se descontará de caja. El resto quedará como deuda pendiente al proveedor.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Fecha de Vencimiento de la Factura</label>
+                  <input type="date" class="form-control" name="due_date" id="dueDateInput">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Products Table -->
+      <div class="citypet-card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-primary">
+            <i class="bi bi-box-seam me-1"></i> Productos a Ingresar
+          </h5>
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="openProductSelector()">
+            <i class="bi bi-plus-lg"></i> Agregar Producto
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="citypet-table table-hover align-middle" id="purchaseItemsTable">
+            <thead>
+              <tr>
+                <th>Código / Producto</th>
+                <th style="width: 110px;" class="text-center">Cantidad</th>
+                <th style="width: 140px;" class="text-end">Costo Unit. ({{ currency }})</th>
+                <th style="width: 140px;" class="text-end">Subtotal ({{ currency }})</th>
+                <th style="width: 60px;" class="text-center"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsTableBody">
+              <tr id="emptyRow">
+                <td colspan="5" class="text-center py-4 text-muted">
+                  <i class="bi bi-cart-x fs-3 d-block mb-1"></i>
+                  Aún no has agregado productos. Haz clic en "Agregar Producto".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="citypet-card p-3 mb-3">
+        <label class="form-label fw-semibold">Notas u Observaciones</label>
+        <textarea class="form-control" name="notes" rows="2" placeholder="Observaciones de la entrega, estado de la mercancía, etc."></textarea>
+      </div>
+    </div>
+
+    <!-- Summary sidebar -->
+    <div class="col-lg-4">
+      <div class="citypet-card p-3 sticky-top" style="top: 80px;">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Resumen Financiero</h5>
+
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Subtotal:</span>
+          <span class="fw-semibold" id="lblSubtotal">{{ currency }} 0.00</span>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small text-muted">Impuesto / IVA ({{ currency }}):</label>
+          <input type="number" step="0.01" class="form-control form-control-sm text-end" name="tax_amount" id="taxAmount" value="0.00" oninput="calculateTotals()">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small text-muted">Descuento Global ({{ currency }}):</label>
+          <input type="number" step="0.01" class="form-control form-control-sm text-end" name="discount_amount" id="discountAmount" value="0.00" oninput="calculateTotals()">
+        </div>
+
+        <hr>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fs-5 fw-bold">Total Compra:</span>
+          <span class="fs-4 fw-bold text-primary" id="lblTotal">{{ currency }} 0.00</span>
+        </div>
+
+        <div id="creditSummaryBreakdown" class="bg-light p-2 rounded border mb-3 small d-none">
+          <div class="d-flex justify-content-between text-success">
+            <span>Salida de Caja Hoy:</span>
+            <strong id="lblPaidToday">{{ currency }} 0.00</strong>
+          </div>
+          <div class="d-flex justify-content-between text-danger mt-1">
+            <span>Saldo por Pagar a Proveedor:</span>
+            <strong id="lblBalanceDue">{{ currency }} 0.00</strong>
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-outline-info" onclick="previewPurchase()">
+            <i class="bi bi-eye"></i> Vista Previa con Marca de Agua
+          </button>
+          <button type="button" class="btn btn-success btn-lg fw-bold" onclick="submitPurchase()">
+            <i class="bi bi-check-circle-fill"></i> Confirmar y Guardar Compra
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<!-- Modal: Select Product -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Seleccionar Producto para Compra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" class="form-control mb-3" id="prodSearchInput" placeholder="Buscar por código o nombre..." oninput="filterProductList()">
+        <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+          <table class="citypet-table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Stock Actual</th>
+                <th>Costo Actual</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="prodListTbody">
+              {% for p in products %}
+              <tr class="prod-row" data-code="{{ p.code }}" data-name="{{ p.name.lower() }}">
+                <td><code>{{ p.code }}</code></td>
+                <td class="fw-semibold">{{ p.name }}</td>
+                <td>{{ p.current_stock }} {{ p.unit }}</td>
+                <td>{{ currency }} {{ "{:,.2f}".format(p.purchase_price) }}</td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-primary" onclick="addProductToPurchase('{{ p.id }}', '{{ p.code }}', '{{ p.name|replace("'", "\\'") }}', '{{ p.purchase_price }}')">
+                    Seleccionar
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Vista Previa de Compra con Marca de Agua -->
+<div class="modal fade" id="purchasePreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content preview-watermark-container">
+      <div class="preview-watermark">VISTA PREVIA — COMPRA NO CONFIRMADA</div>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold text-primary"><i class="bi bi-cart-check"></i> Simulación de Comprobante de Compra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="purchasePreviewBody">
+        <!-- Live preview injected here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Modificar</button>
+        <button type="button" class="btn btn-success" onclick="document.getElementById('purchaseForm').submit()">
+          <i class="bi bi-check-lg"></i> Confirmar Ahora
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let purchaseItems = [];
+
+document.getElementById('purchaseIdempotency').value = 'COM-' + crypto.randomUUID();
+
+function toggleCreditPurchaseFields() {
+  const cond = document.getElementById('paymentCondition').value;
+  const isCredit = cond.toLowerCase().includes('credito') || cond.toLowerCase().includes('crédito');
+  document.getElementById('creditPurchaseContainer').classList.toggle('d-none', !isCredit);
+  document.getElementById('creditSummaryBreakdown').classList.toggle('d-none', !isCredit);
+  if (isCredit) {
+    let days = 30;
+    if (cond.includes('15')) days = 15;
+    else if (cond.includes('60')) days = 60;
+    const due = new Date();
+    due.setDate(due.getDate() + days);
+    document.getElementById('dueDateInput').value = due.toISOString().split('T')[0];
+  } else {
+    document.getElementById('initialPaymentInput').value = '0.00';
+  }
+  calculateTotals();
+}
+
+function openProductSelector() {
+  new bootstrap.Modal(document.getElementById('productModal')).show();
+}
+
+function filterProductList() {
+  const q = document.getElementById('prodSearchInput').value.toLowerCase().trim();
+  document.querySelectorAll('.prod-row').forEach(row => {
+    const code = row.getAttribute('data-code').toLowerCase();
+    const name = row.getAttribute('data-name');
+    row.style.display = (code.includes(q) || name.includes(q)) ? '' : 'none';
+  });
+}
+
+function addProductToPurchase(id, code, name, cost) {
+  const existing = purchaseItems.find(i => i.product_id == id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    purchaseItems.push({
+      product_id: parseInt(id),
+      code: code,
+      name: name,
+      quantity: 1,
+      unit_cost: parseFloat(cost) || 0.0,
+      update_product_cost: true
+    });
+  }
+  bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+  renderItemsTable();
+}
+
+function removePurchaseItem(idx) {
+  purchaseItems.splice(idx, 1);
+  renderItemsTable();
+}
+
+function updateItemQty(idx, val) {
+  purchaseItems[idx].quantity = Math.max(0.01, parseFloat(val) || 1);
+  renderItemsTable();
+}
+
+function updateItemCost(idx, val) {
+  purchaseItems[idx].unit_cost = Math.max(0, parseFloat(val) || 0);
+  renderItemsTable();
+}
+
+function renderItemsTable() {
+  const tbody = document.getElementById('itemsTableBody');
+  if (purchaseItems.length === 0) {
+    tbody.innerHTML = `
+      <tr id="emptyRow">
+        <td colspan="5" class="text-center py-4 text-muted">
+          <i class="bi bi-cart-x fs-3 d-block mb-1"></i>
+          Aún no has agregado productos. Haz clic en "Agregar Producto".
+        </td>
+      </tr>
+    `;
+    calculateTotals();
+    return;
+  }
+
+  tbody.innerHTML = '';
+  purchaseItems.forEach((it, idx) => {
+    const sub = (it.quantity * it.unit_cost).toFixed(2);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <span class="badge bg-light text-dark border">` + it.code + `</span>
+        <span class="fw-semibold ms-1">` + it.name + `</span>
+      </td>
+      <td class="text-center">
+        <input type="number" step="1" min="1" class="form-control form-control-sm text-center" 
+               value="` + it.quantity + `" onchange="updateItemQty(` + idx + `, this.value)">
+      </td>
+      <td class="text-end">
+        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end" 
+               value="` + it.unit_cost.toFixed(2) + `" onchange="updateItemCost(` + idx + `, this.value)">
+      </td>
+      <td class="text-end fw-bold">{{ currency }} ` + sub + `</td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePurchaseItem(` + idx + `)" title="Eliminar">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  calculateTotals();
+}
+
+function calculateTotals() {
+  let subtotal = 0;
+  purchaseItems.forEach(it => {
+    subtotal += it.quantity * it.unit_cost;
+  });
+
+  const tax = parseFloat(document.getElementById('taxAmount').value || 0);
+  const discount = parseFloat(document.getElementById('discountAmount').value || 0);
+  const total = Math.max(0, subtotal + tax - discount);
+
+  document.getElementById('lblSubtotal').textContent = '{{ currency }} ' + subtotal.toFixed(2);
+  document.getElementById('lblTotal').textContent = '{{ currency }} ' + total.toFixed(2);
+
+  const cond = document.getElementById('paymentCondition').value.toLowerCase();
+  const isCredit = cond.includes('credito') || cond.includes('crédito');
+  if (isCredit) {
+    const initPay = Math.min(total, Math.max(0, parseFloat(document.getElementById('initialPaymentInput').value || 0)));
+    const balDue = Math.max(0, total - initPay);
+    document.getElementById('lblPaidToday').textContent = '{{ currency }} ' + initPay.toFixed(2);
+    document.getElementById('lblBalanceDue').textContent = '{{ currency }} ' + balDue.toFixed(2);
+  }
+
+  document.getElementById('itemsJson').value = JSON.stringify(purchaseItems);
+}
+
+function previewPurchase() {
+  const supplierId = document.getElementById('supplierSelect').value;
+  if (!supplierId) {
+    alert("Por favor seleccione un proveedor.");
+    return;
+  }
+  if (purchaseItems.length === 0) {
+    alert("Por favor agregue al menos un producto a la compra.");
+    return;
+  }
+
+  const supplierName = document.getElementById('supplierSelect').selectedOptions[0].text;
+  const supplierInvoice = document.getElementById('supplierInvoice').value || 'Sin No.';
+  const condition = document.getElementById('paymentCondition').value;
+  const method = document.getElementById('paymentMethod').value;
+  const tax = parseFloat(document.getElementById('taxAmount').value || 0);
+  const discount = parseFloat(document.getElementById('discountAmount').value || 0);
+
+  let subtotal = 0;
+  let itemsHtml = '';
+  purchaseItems.forEach(it => {
+    const lineTot = it.quantity * it.unit_cost;
+    subtotal += lineTot;
+    itemsHtml += `
+      <tr>
+        <td><code>` + it.code + `</code> ` + it.name + `</td>
+        <td class="text-center">` + it.quantity + `</td>
+        <td class="text-end">{{ currency }} ` + it.unit_cost.toFixed(2) + `</td>
+        <td class="text-end">{{ currency }} ` + lineTot.toFixed(2) + `</td>
+      </tr>
+    `;
+  });
+
+  const total = Math.max(0, subtotal + tax - discount);
+  const isCredit = condition.toLowerCase().includes('credito') || condition.toLowerCase().includes('crédito');
+  const initPay = isCredit ? Math.min(total, Math.max(0, parseFloat(document.getElementById('initialPaymentInput').value || 0))) : total;
+  const balDue = Math.max(0, total - initPay);
+
+  const previewHtml = `
+    <div class="text-center mb-3">
+      <h6 class="fw-bold mb-0">CITYPET PHARMA — COMPROBANTE DE COMPRA</h6>
+      <small class="text-muted">RUC: {{ company_ruc }}</small>
+    </div>
+    <div class="row g-2 small border-top border-bottom py-2 my-2">
+      <div class="col-6"><strong>Proveedor:</strong> ` + supplierName + `</div>
+      <div class="col-6"><strong>Factura Proveedor:</strong> ` + supplierInvoice + `</div>
+      <div class="col-6"><strong>Condición:</strong> ` + condition + `</div>
+      <div class="col-6"><strong>Método:</strong> ` + method + `</div>
+    </div>
+    <table class="table table-sm small align-middle my-3">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="text-center">Cant.</th>
+          <th class="text-end">Costo Unit.</th>
+          <th class="text-end">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>` + itemsHtml + `</tbody>
+    </table>
+    <div class="bg-light p-3 rounded border text-end">
+      <div>Subtotal: <strong>{{ currency }} ` + subtotal.toFixed(2) + `</strong></div>
+      <div>Impuesto: <strong>{{ currency }} ` + tax.toFixed(2) + `</strong></div>
+      <div>Descuento: <strong>-{{ currency }} ` + discount.toFixed(2) + `</strong></div>
+      <div class="fs-5 fw-bold text-primary mt-1">Total Compra: {{ currency }} ` + total.toFixed(2) + `</div>
+      <div class="border-top pt-2 mt-2">
+        <div class="text-success">Efectivo / Desembolso Hoy: <strong>{{ currency }} ` + initPay.toFixed(2) + `</strong></div>
+        <div class="text-danger fw-bold">Saldo Pendiente por Pagar: {{ currency }} ` + balDue.toFixed(2) + `</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('purchasePreviewBody').innerHTML = previewHtml;
+  new bootstrap.Modal(document.getElementById('purchasePreviewModal')).show();
+}
+
+function submitPurchase() {
+  const supplierId = document.getElementById('supplierSelect').value;
+  if (!supplierId) {
+    alert("Debe seleccionar un proveedor para registrar la compra.");
+    return;
+  }
+  if (purchaseItems.length === 0) {
+    alert("Debe agregar al menos un producto a la compra.");
+    return;
+  }
+
+  document.getElementById('itemsJson').value = JSON.stringify(purchaseItems);
+  document.getElementById('purchaseForm').submit();
+}
+</script>
+{% endblock %}

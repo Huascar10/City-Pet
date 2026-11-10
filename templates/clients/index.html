@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% block title %}Clientes y Créditos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Directorio de Clientes y Control de Crédito</h1>
+    <p class="text-muted small mb-0">Gestión de veterinarias, límites de crédito, cuentas por cobrar y estados de cuenta ({{ clients|length }} clientes)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+    {% if not current_user.is_employee %}
+    <button type="button" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newClientModal">
+      <i class="bi bi-person-plus"></i> Nuevo Cliente
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filters Toolbar -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Buscar por nombre, razón social, código, RUC..." value="{{ search }}">
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <select name="department" class="form-select form-select-sm">
+        <option value="">Departamento (Todos)</option>
+        {% for d in departments %}
+        <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <select name="salesperson" class="form-select form-select-sm">
+        <option value="">Vendedor (Todos)</option>
+        {% for s in salespersons %}
+        <option value="{{ s }}" {% if selected_salesperson == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <select name="debt" class="form-select form-select-sm">
+        <option value="">Estado Cartera (Todos)</option>
+        <option value="pending" {% if debt_filter == 'pending' %}selected{% endif %}>Con Deuda Activa</option>
+        <option value="overdue" {% if debt_filter == 'overdue' %}selected{% endif %}>Con Facturas Vencidas</option>
+      </select>
+    </div>
+
+    <div class="col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100"><i class="bi bi-funnel"></i></button>
+      {% if search or selected_dept or selected_salesperson or debt_filter %}
+      <a href="{{ url_for('clients.index') }}" class="btn btn-sm btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Clients Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre / Razón Social</th>
+          <th>Ubicación / Tel.</th>
+          <th>Vendedor</th>
+          <th class="text-end">Límite Crédito</th>
+          <th class="text-end">Deuda Actual</th>
+          <th class="text-end">Disponible</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr>
+          <td><code>{{ c.code }}</code></td>
+          <td>
+            <a href="{{ url_for('clients.history', id=c.id) }}" class="fw-bold text-decoration-none text-primary d-block">
+              {{ c.name }}
+            </a>
+            {% if c.trade_name and c.trade_name != c.name %}
+            <small class="text-muted d-block">{{ c.trade_name }}</small>
+            {% endif %}
+            {% if c.ruc %}<small class="text-muted" style="font-size: 0.72rem;">RUC: {{ c.ruc }}</small>{% endif %}
+          </td>
+          <td class="small">
+            <div>{{ c.department or '—' }} {% if c.phone %}| <i class="bi bi-telephone text-muted"></i> {{ c.phone }}{% endif %}</div>
+            <small class="text-muted text-truncate d-block" style="max-width: 180px;" title="{{ c.address }}">{{ c.address or '' }}</small>
+          </td>
+          <td><span class="badge bg-light text-secondary border">{{ c.salesperson or 'Mostrador' }}</span></td>
+          <td class="text-end fw-semibold small">
+            {% if c.credit_limit > 0 %}
+            {{ currency }} {{ "{:,.2f}".format(c.credit_limit) }}
+            {% else %}
+            <span class="text-muted">Contado ({{ currency }} 0)</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-bold small {% if c.total_debt > 0.009 %}text-danger{% else %}text-muted{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format(c.total_debt) }}
+            {% if c.overdue_invoices|length > 0 %}
+            <span class="badge bg-danger d-block mt-1" style="font-size: 0.65rem;">{{ c.overdue_invoices|length }} vencida(s)</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-semibold small {% if c.available_credit > 0 %}text-success{% else %}text-muted{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format(c.available_credit) }}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('clients.history', id=c.id) }}" class="btn btn-outline-primary" title="Ver Perfil de Crédito, Facturas y Abonos">
+                <i class="bi bi-person-vcard"></i> Perfil
+              </a>
+              {% if not current_user.is_employee %}
+              <button type="button" class="btn btn-outline-secondary" title="Editar"
+                onclick="openEditClientModal('{{ c.id }}', '{{ c.code }}', '{{ c.name|escape }}', '{{ c.trade_name|escape if c.trade_name else '' }}', '{{ c.owner_name|escape if c.owner_name else '' }}', '{{ c.department|escape if c.department else '' }}', '{{ c.municipality|escape if c.municipality else '' }}', '{{ c.address|escape if c.address else '' }}', '{{ c.ruc or '' }}', '{{ c.phone or '' }}', '{{ c.salesperson or '' }}', '{{ c.credit_limit }}', '{{ c.credit_days }}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">No se encontraron clientes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Cliente -->
+<div class="modal fade" id="newClientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('clients.create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-person-plus text-primary me-2"></i>Registrar Nuevo Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Código Cliente (opcional)</label>
+              <input type="text" name="code" class="form-control" placeholder="Automático (Ej. CP-C0348)">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Nombre Completo / Veterinaria *</label>
+              <input type="text" name="name" class="form-control" placeholder="Ej. VETERINARIA DOG HOUSE" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Razón Social</label>
+              <input type="text" name="trade_name" class="form-control" placeholder="Nombre comercial corto...">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Propietario / Contacto</label>
+              <input type="text" name="owner_name" class="form-control" placeholder="Nombre del doctor o encargado...">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">RUC / Cédula</label>
+              <input type="text" name="ruc" class="form-control" placeholder="0010305890008G">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Teléfono</label>
+              <input type="text" name="phone" class="form-control" placeholder="8888-8888">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Vendedor Asignado</label>
+              <select name="salesperson" class="form-select">
+                <option value="Mostrador">Mostrador</option>
+                <option value="Lenin Montenegro">Lenin Montenegro</option>
+                <option value="Asdrubal Zuniga">Asdrubal Zuniga</option>
+                <option value="Mario Alberto Chamorro">Mario Alberto Chamorro</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Departamento</label>
+              <input type="text" name="department" class="form-control" value="MANAGUA">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Municipio</label>
+              <input type="text" name="municipality" class="form-control" value="MANAGUA">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Dirección</label>
+              <input type="text" name="address" class="form-control" placeholder="Dirección exacta...">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Límite de Crédito ({{ currency }})</label>
+              <input type="number" step="0.01" min="0" name="credit_limit" class="form-control" value="0.00">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Días de Crédito</label>
+              <input type="number" step="1" min="0" name="credit_days" class="form-control" value="30">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Cliente -->
+<div class="modal fade" id="editClientModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editClientForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Editar Cliente <span id="editClientCodeBadge" class="badge bg-secondary"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Nombre Completo / Veterinaria *</label>
+              <input type="text" id="edit_cli_name" name="name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Razón Social</label>
+              <input type="text" id="edit_cli_trade" name="trade_name" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Propietario / Contacto</label>
+              <input type="text" id="edit_cli_owner" name="owner_name" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">RUC</label>
+              <input type="text" id="edit_cli_ruc" name="ruc" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Teléfono</label>
+              <input type="text" id="edit_cli_phone" name="phone" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Vendedor</label>
+              <input type="text" id="edit_cli_salesperson" name="salesperson" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Departamento</label>
+              <input type="text" id="edit_cli_dept" name="department" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Municipio</label>
+              <input type="text" id="edit_cli_muni" name="municipality" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Dirección</label>
+              <input type="text" id="edit_cli_address" name="address" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Límite de Crédito ({{ currency }})</label>
+              <input type="number" step="0.01" min="0" id="edit_cli_credit_limit" name="credit_limit" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Días de Crédito</label>
+              <input type="number" step="1" min="0" id="edit_cli_credit_days" name="credit_days" class="form-control">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Actualizar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditClientModal(id, code, name, trade, owner, dept, muni, addr, ruc, phone, salesperson, creditLimit, creditDays) {
+  const form = document.getElementById('editClientForm');
+  form.action = `/clients/${id}/edit`;
+  document.getElementById('editClientCodeBadge').textContent = code;
+  document.getElementById('edit_cli_name').value = name;
+  document.getElementById('edit_cli_trade').value = trade;
+  document.getElementById('edit_cli_owner').value = owner;
+  document.getElementById('edit_cli_dept').value = dept;
+  document.getElementById('edit_cli_muni').value = muni;
+  document.getElementById('edit_cli_address').value = addr;
+  document.getElementById('edit_cli_ruc').value = ruc;
+  document.getElementById('edit_cli_phone').value = phone;
+  document.getElementById('edit_cli_salesperson').value = salesperson;
+  document.getElementById('edit_cli_credit_limit').value = creditLimit;
+  document.getElementById('edit_cli_credit_days').value = creditDays;
+  new bootstrap.Modal(document.getElementById('editClientModal')).show();
+}
+</script>
+{% endblock %}

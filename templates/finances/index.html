@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}Movimientos de Dinero y Finanzas{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Movimientos de Dinero y Finanzas</h1>
+    <p class="text-muted small mb-0">Control de flujo de caja, gastos operativos, ingresos extraordinarios y caja chica</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('finances.export_excel', type=selected_type, category=selected_category, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+    </a>
+    <a href="{{ url_for('finances.export_pdf', type=selected_type, category=selected_category, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+    </a>
+    <button type="button" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newFinancialModal">
+      <i class="bi bi-plus-circle"></i> Registrar Ingreso / Gasto
+    </button>
+  </div>
+</div>
+
+<!-- Cashflow Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card success p-3">
+      <div class="metric-label text-success">Total Ingresos Registrados</div>
+      <div class="metric-value text-success">+{{ currency }} {{ "{:,.2f}".format(total_incomes) }}</div>
+      <small class="text-muted">Cobros, ventas y entradas de dinero</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card danger p-3">
+      <div class="metric-label text-danger">Total Gastos Operativos</div>
+      <div class="metric-value text-danger">-{{ currency }} {{ "{:,.2f}".format(total_expenses) }}</div>
+      <small class="text-muted">Compras, servicios, salarios y alquileres</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card citypet-card metric-card info p-3">
+      <div class="metric-label text-primary">Flujo Neto del Período</div>
+      <div class="metric-value {% if net_flow >= 0 %}text-primary{% else %}text-danger{% endif %}">
+        {{ currency }} {{ "{:,.2f}".format(net_flow) }}
+      </div>
+      <small class="text-muted">Diferencial económico</small>
+    </div>
+  </div>
+</div>
+
+<!-- Filters Toolbar -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-3">
+      <select name="type" class="form-select form-select-sm">
+        <option value="">Todos los tipos</option>
+        <option value="Ingreso" {% if selected_type == 'Ingreso' %}selected{% endif %}>Ingreso (+)</option>
+        <option value="Gasto" {% if selected_type == 'Gasto' %}selected{% endif %}>Gasto (-)</option>
+        <option value="Ajuste_Caja" {% if selected_type == 'Ajuste_Caja' %}selected{% endif %}>Ajuste de Caja</option>
+        <option value="Devolucion" {% if selected_type == 'Devolucion' %}selected{% endif %}>Devolución</option>
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <select name="category" class="form-select form-select-sm">
+        <option value="">Todas las categorías</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" placeholder="Desde">
+    </div>
+
+    <div class="col-md-2">
+      <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}" placeholder="Hasta">
+    </div>
+
+    <div class="col-md-2 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+      {% if selected_type or selected_category or start_date %}
+      <a href="{{ url_for('finances.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Financial Ledger Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Método de Pago</th>
+          <th class="text-end">Monto</th>
+          <th>Registrado Por</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in movements %}
+        <tr>
+          <td><code>{{ m.code }}</code></td>
+          <td class="small text-muted">{{ m.date.strftime('%d/%m/%Y') }}</td>
+          <td>
+            <span class="badge {% if m.movement_type == 'Ingreso' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+              {{ m.movement_type }}
+            </span>
+          </td>
+          <td class="fw-semibold">{{ m.category }}</td>
+          <td class="small">{{ m.description }}</td>
+          <td class="small text-muted">{{ m.payment_method }}</td>
+          <td class="text-end fw-bold fs-6 {% if m.movement_type == 'Ingreso' %}text-success{% else %}text-danger{% endif %}">
+            {% if m.movement_type == 'Ingreso' %}+{% else %}-{% endif %}{{ currency }} {{ "{:,.2f}".format(m.amount) }}
+          </td>
+          <td class="small text-muted">{{ m.user.full_name if m.user else 'Sistema' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">No se encontraron movimientos financieros en el período seleccionado.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Registrar Movimiento Financiero -->
+<div class="modal fade" id="newFinancialModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('finances.create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-cash-stack text-primary me-2"></i>Registrar Movimiento de Dinero</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Tipo de Movimiento *</label>
+              <select name="movement_type" class="form-select" required>
+                <option value="Ingreso">Ingreso (+)</option>
+                <option value="Gasto" selected>Gasto (-)</option>
+                <option value="Ajuste_Caja">Ajuste de Caja Chica</option>
+                <option value="Devolucion">Devolución de Dinero</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Categoría *</label>
+              <select name="category" class="form-select" required>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Monto ({{ currency }}) *</label>
+              <input type="number" step="0.01" min="0.01" name="amount" class="form-control" placeholder="0.00" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Método de Pago</label>
+              <select name="payment_method" class="form-select">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia Bancaria</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Tarjeta">Tarjeta</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Fecha del Movimiento</label>
+              <input type="date" name="date" class="form-control" value="{{ now.strftime('%Y-%m-%d') }}">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Descripción / Justificación *</label>
+              <textarea name="description" class="form-control" rows="3" placeholder="Detalle del gasto o ingreso (ej. Pago de factura de luz ENATREL, compra de suministros de limpieza)..." required></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Guardar Movimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

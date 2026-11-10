@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %}Previsualización y Mapeo Excel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('imports.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Cancelar</a>
+      <h1 class="h3 fw-bold mb-0">Previsualización de Hojas y Correspondencia</h1>
+    </div>
+    <p class="text-muted small mb-0">Verifique los datos detectados y seleccione qué campos corresponden a CityPet</p>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('imports.execute_import') }}" id="importForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="temp_file" value="{{ temp_file }}">
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-4">
+      <div class="card citypet-card border-0 p-4">
+        <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-gear-fill me-2"></i>1. Configuración de Destino</h5>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Módulo de Destino *</label>
+          <select name="target_entity" id="targetEntitySelect" class="form-select" required>
+            <option value="products" selected>Catálogo de Productos</option>
+            <option value="clients">Directorio de Clientes</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Hoja del Archivo Excel *</label>
+          <select name="sheet_name" id="sheetSelect" class="form-select" required>
+            {% for name, info in sheets.items() %}
+            <option value="{{ name }}">{{ name }} ({{ info.total_rows }} filas)</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label small fw-semibold">Fila de Encabezados</label>
+          <input type="number" name="header_row" id="headerRowInput" class="form-control" value="1" min="1" max="20" required>
+          <small class="text-muted">Número de la fila donde se ubican los títulos de columna.</small>
+        </div>
+
+        <button type="submit" class="btn btn-citypet-primary w-100 py-2 fw-semibold shadow-sm">
+          <i class="bi bi-check2-circle me-1"></i> Confirmar e Importar Datos
+        </button>
+      </div>
+    </div>
+
+    <!-- Column Mapping Card -->
+    <div class="col-lg-8">
+      <div class="card citypet-card border-0 p-4 mb-4">
+        <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-diagram-3 me-2"></i>2. Mapeo de Columnas</h5>
+        <p class="small text-muted mb-3">Indique qué columna del archivo Excel corresponde a cada campo:</p>
+
+        <!-- Product Fields Mapping -->
+        <div id="productMappingFields" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Nombre del Producto *</label>
+            <select name="col_name" class="form-select form-select-sm mapping-col-select">
+              <option value="2">Columna B (Columna 2)</option>
+              <option value="3" selected>Columna C (Columna 3)</option>
+              <option value="1">Columna A (Columna 1)</option>
+              <option value="4">Columna D (Columna 4)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Código del Producto</label>
+            <select name="col_code" class="form-select form-select-sm mapping-col-select">
+              <option value="2" selected>Columna B (Columna 2)</option>
+              <option value="1">Columna A (Columna 1)</option>
+              <option value="-1">No asignar (Generar automático)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Categoría</label>
+            <select name="col_category" class="form-select form-select-sm mapping-col-select">
+              <option value="4" selected>Columna D (Columna 4)</option>
+              <option value="3">Columna C (Columna 3)</option>
+              <option value="-1">No asignar (Predeterminado: General)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Precio de Venta</label>
+            <select name="col_sale_price" class="form-select form-select-sm mapping-col-select">
+              <option value="11" selected>Columna K (Columna 11)</option>
+              <option value="10">Columna J (Columna 10)</option>
+              <option value="-1">0.00</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Costo de Compra</label>
+            <select name="col_purchase_price" class="form-select form-select-sm mapping-col-select">
+              <option value="17">Columna Q (Columna 17)</option>
+              <option value="-1" selected>No asignar / 0.00</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Existencia Inicial / Stock</label>
+            <select name="col_stock" class="form-select form-select-sm mapping-col-select">
+              <option value="10" selected>Columna J (Columna 10)</option>
+              <option value="12">Columna L (Columna 12 - Físico)</option>
+              <option value="-1">0</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Client Fields Mapping (hidden by default) -->
+        <div id="clientMappingFields" class="row g-3 d-none">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Nombre Completo del Cliente *</label>
+            <select name="col_name" class="form-select form-select-sm">
+              <option value="3" selected>Columna C (Columna 3)</option>
+              <option value="2">Columna B (Columna 2)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Código del Cliente</label>
+            <select name="col_code" class="form-select form-select-sm">
+              <option value="1" selected>Columna A (Columna 1)</option>
+              <option value="-1">Generar automático</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Teléfono</label>
+            <select name="col_phone" class="form-select form-select-sm">
+              <option value="9" selected>Columna I (Columna 9)</option>
+              <option value="-1">No asignar</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">RUC</label>
+            <select name="col_ruc" class="form-select form-select-sm">
+              <option value="8" selected>Columna H (Columna 8)</option>
+              <option value="-1">No asignar</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold">Dirección</label>
+            <select name="col_address" class="form-select form-select-sm">
+              <option value="7" selected>Columna G (Columna 7)</option>
+              <option value="-1">No asignar</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Sample Data Table -->
+      <div class="card citypet-card border-0 p-4">
+        <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-table me-2"></i>3. Vista Previa de Filas</h5>
+        <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+          <table class="table table-bordered table-sm small">
+            {% for name, info in sheets.items() %}
+            <tbody id="preview-sheet-{{ name }}" class="sheet-preview-tbody {% if not loop.first %}d-none{% endif %}">
+              {% for row in info.preview_rows %}
+              <tr>
+                <td class="bg-light fw-bold text-muted text-center" style="width: 35px;">{{ loop.index }}</td>
+                {% for cell in row %}
+                <td class="text-truncate" style="max-width: 140px;" title="{{ cell }}">{{ cell }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const targetSelect = document.getElementById('targetEntitySelect');
+const prodFields = document.getElementById('productMappingFields');
+const cliFields = document.getElementById('clientMappingFields');
+const sheetSelect = document.getElementById('sheetSelect');
+
+targetSelect.addEventListener('change', function() {
+  if (this.value === 'clients') {
+    prodFields.classList.add('d-none');
+    cliFields.classList.remove('d-none');
+  } else {
+    prodFields.classList.remove('d-none');
+    cliFields.classList.add('d-none');
+  }
+});
+
+sheetSelect.addEventListener('change', function() {
+  document.querySelectorAll('.sheet-preview-tbody').forEach(el => el.classList.add('d-none'));
+  const activeTbody = document.getElementById('preview-sheet-' + this.value);
+  if (activeTbody) activeTbody.classList.remove('d-none');
+});
+</script>
+{% endblock %}

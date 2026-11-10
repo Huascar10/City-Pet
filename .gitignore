@@ -1,0 +1,60 @@
+# ==============================================================================
+# CITYPET PHARMA — .gitignore (Protección de Credenciales, Bases de Datos y Archivos)
+# ==============================================================================
+
+# 1. Variables de entorno y secretos (NUNCA subir a GitHub)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.*
+credentials.*
+
+# 2. Bases de datos locales con información comercial o de prueba
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+instance/
+
+# 3. Respaldos locales y snapshots de base de datos
+backups/
+*.bak
+*.dump
+*.sql
+
+# 4. Archivos subidos localmente y temporales de importación
+static/uploads/*
+!static/uploads/.gitkeep
+temp_*
+
+# 5. Datos comerciales locales en Excel / PDF de referencia (no publicar en el repositorio)
+INVENTARIO NUEVO.xlsx
+City Pet Pharma _ Factura.pdf
+
+# 6. Entornos virtuales de Python y cachés
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# 7. Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log

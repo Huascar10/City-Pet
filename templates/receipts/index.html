@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Comprobantes y Facturas{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Comprobantes y Facturas</h1>
+    <p class="text-muted small mb-0">Buscador avanzado y archivo inmutable de comprobantes emitidos</p>
+  </div>
+  <a href="{{ url_for('sales.pos') }}" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+    <i class="bi bi-cart-plus"></i> Nueva Venta
+  </a>
+</div>
+
+<!-- Advanced Search Card -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-hash"></i></span>
+        <input type="text" name="receipt_number" class="form-control border-start-0" placeholder="Nº de comprobante / factura..." value="{{ selected_number }}">
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-person"></i></span>
+        <input type="text" name="client_name" class="form-control border-start-0" placeholder="Nombre del cliente..." value="{{ selected_client }}">
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <select name="type" class="form-select form-select-sm">
+        <option value="">Todos los tipos</option>
+        {% for rt in receipt_types %}
+        <option value="{{ rt }}" {% if selected_type == rt %}selected{% endif %}>{{ rt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" placeholder="Desde">
+    </div>
+
+    <div class="col-md-2 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+      {% if selected_number or selected_client or selected_type or start_date %}
+      <a href="{{ url_for('receipts.index') }}" class="btn btn-sm btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Receipts Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Nº Comprobante</th>
+          <th>Fecha y Hora</th>
+          <th>Tipo</th>
+          <th>Cliente / Receptor</th>
+          <th>Vendedor</th>
+          <th>Forma de Pago</th>
+          <th class="text-end">Total</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in receipts %}
+        <tr>
+          <td class="fw-bold">
+            <code>{{ r.receipt_number }}</code>
+          </td>
+          <td class="small text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            <span class="badge bg-light text-dark border">{{ r.receipt_type }}</span>
+          </td>
+          <td class="fw-semibold text-truncate" style="max-width: 220px;" title="{{ r.client_name_snapshot }}">
+            {{ r.client_name_snapshot or 'Consumidor Final' }}
+          </td>
+          <td class="small text-muted">{{ r.salesperson_snapshot or 'Mostrador' }}</td>
+          <td class="small">{{ r.payment_method or 'Efectivo' }}</td>
+          <td class="text-end fw-bold fs-6 text-dark">{{ currency }} {{ "{:,.2f}".format(r.total_amount) }}</td>
+          <td class="text-center">
+            {% if r.status == 'confirmado' %}
+            <span class="badge badge-status-ok">Emitido</span>
+            {% else %}
+            <span class="badge badge-status-danger">Anulado</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('receipts.view_receipt', id=r.id) }}" class="btn btn-outline-secondary" title="Ver Detalle">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('receipts.print_receipt', id=r.id) }}" target="_blank" class="btn btn-outline-primary" title="Imprimir Factura">
+                <i class="bi bi-printer"></i>
+              </a>
+              <a href="{{ url_for('receipts.download_pdf', id=r.id) }}" class="btn btn-outline-success" title="Descargar PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center py-5 text-muted">No se encontraron comprobantes registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

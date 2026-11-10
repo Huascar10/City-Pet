@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Panel Comercial CityPet — Dashboard General</h1>
+    <p class="text-muted small mb-0">Resumen claro de operaciones del día, flujo de dinero, cartera de clientes/proveedores e inventario</p>
+  </div>
+  
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="btn-group" role="group">
+      <a href="{{ url_for('dashboard.index', days=7) }}" class="btn btn-sm {% if selected_days == 7 %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 Días</a>
+      <a href="{{ url_for('dashboard.index', days=30) }}" class="btn btn-sm {% if selected_days == 30 %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 Días</a>
+      <a href="{{ url_for('dashboard.index', days=90) }}" class="btn btn-sm {% if selected_days == 90 %}btn-primary{% else %}btn-outline-secondary{% endif %}">90 Días</a>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+  </div>
+</div>
+
+<!-- 11.3 Acciones Rápidas (Quick Actions for Frequent Tasks) -->
+<div class="card citypet-card p-3 mb-4 border-0 shadow-sm" id="quickActionsBar">
+  <div class="small fw-bold text-uppercase text-muted mb-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Acciones Rápidas</div>
+  <div class="row g-2">
+    <div class="col-6 col-md-4 col-xl">
+      <a href="{{ url_for('sales.pos') }}" class="btn btn-citypet-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm">
+        <i class="bi bi-cart-plus-fill fs-5"></i> <span class="fw-semibold">Nueva Venta</span>
+      </a>
+    </div>
+    {% if not current_user.is_employee %}
+    <div class="col-6 col-md-4 col-xl">
+      <a href="{{ url_for('purchases.new') }}" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-bag-plus-fill fs-5"></i> <span class="fw-semibold">Nueva Compra</span>
+      </a>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+      <a href="{{ url_for('sales.abonos_list') }}" class="btn btn-outline-success w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-cash-coin fs-5"></i> <span class="fw-semibold">Registrar Abono Cliente</span>
+      </a>
+    </div>
+    <div class="col-6 col-md-6 col-xl">
+      <a href="{{ url_for('purchases.index') }}" class="btn btn-outline-warning text-dark w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-bank fs-5"></i> <span class="fw-semibold">Pago a Proveedor</span>
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-12 col-md-6 col-xl">
+      <a href="{{ url_for('products.index') }}" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-box-seam fs-5"></i> <span class="fw-semibold">Consultar Inventario</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- 11.2 Jerarquía Visual Principal: Operaciones del Día y Dinero Disponible -->
+<div class="row g-3 mb-3">
+  <!-- Ventas del día -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card success h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="metric-label">Ventas del Día (Ventas Hoy)</div>
+          <div class="metric-value">{{ currency }} {{ "{:,.2f}".format(metrics.today_sales_total) }}</div>
+          <small class="text-muted">{{ metrics.today_sales_count }} factura(s) | Contado: {{ currency }} {{ "{:,.2f}".format(metrics.today_cash_sales_inflow|default(0)) }}</small>
+        </div>
+        <div class="rounded-circle bg-success-subtle p-2 text-success">
+          <i class="bi bi-cart-check fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cobros recibidos -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card info h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="metric-label">Cobros Recibidos Hoy</div>
+          <div class="metric-value text-primary">{{ currency }} {{ "{:,.2f}".format(metrics.today_collections|default(0)) }}</div>
+          <small class="text-muted">Abonos de clientes a crédito</small>
+        </div>
+        <div class="rounded-circle bg-info-subtle p-2 text-info">
+          <i class="bi bi-cash-coin fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compras del día & Gastos adicionales -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card warning h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="metric-label">Compras y Gastos Hoy</div>
+          <div class="metric-value text-danger">{{ currency }} {{ "{:,.2f}".format((metrics.today_purchases_total|default(0)) + (metrics.today_extra_expenses|default(0))) }}</div>
+          <small class="text-muted">Compras: {{ currency }} {{ "{:,.0f}".format(metrics.today_purchases_total|default(0)) }} | Gastos: {{ currency }} {{ "{:,.0f}".format(metrics.today_extra_expenses|default(0)) }}</small>
+        </div>
+        <div class="rounded-circle bg-warning-subtle p-2 text-warning">
+          <i class="bi bi-bag-dash fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dinero disponible -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card citypet-card metric-card h-100 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="metric-label">Dinero Disponible (Caja)</div>
+          <div class="metric-value {% if metrics.available_cash|default(0) >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format(metrics.available_cash|default(0)) }}
+          </div>
+          <small class="text-muted">Flujo hoy: {{ currency }} {{ "{:,.2f}".format((metrics.today_incomes|default(0)) - (metrics.today_expenses|default(0))) }}</small>
+        </div>
+        <div class="rounded-circle bg-primary-subtle p-2 text-primary">
+          <i class="bi bi-safe2 fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Segunda Fila de Jerarquía Visual: Cuentas por Cobrar, Cuentas por Pagar, Existencias Bajas -->
+<div class="row g-3 mb-4">
+  <!-- Cuentas por cobrar pendientes -->
+  <div class="col-md-4">
+    <div class="card citypet-card h-100 p-3 border-start border-4 border-info">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="small text-muted fw-bold text-uppercase">Cuentas por Cobrar (Clientes)</div>
+          <div class="fs-4 fw-bold text-dark mt-1">{{ currency }} {{ "{:,.2f}".format(metrics.accounts_receivable|default(0)) }}</div>
+          <small class="text-muted">{{ metrics.pending_sales_count|default(0) }} factura(s) pendiente(s) de cobro</small>
+        </div>
+        <a href="{{ url_for('sales.abonos_list') }}" class="btn btn-sm btn-outline-info">Cobrar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cuentas por pagar pendientes -->
+  <div class="col-md-4">
+    <div class="card citypet-card h-100 p-3 border-start border-4 border-warning">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="small text-muted fw-bold text-uppercase">Cuentas por Pagar (Proveedores)</div>
+          <div class="fs-4 fw-bold text-dark mt-1">{{ currency }} {{ "{:,.2f}".format(metrics.accounts_payable|default(0)) }}</div>
+          <small class="text-muted">{{ metrics.pending_purchases_count|default(0) }} compra(s) a crédito pendiente(s)</small>
+        </div>
+        <a href="{{ url_for('purchases.index') }}" class="btn btn-sm btn-outline-warning text-dark">Pagar</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Productos con existencias bajas -->
+  <div class="col-md-4">
+    <div class="card citypet-card h-100 p-3 border-start border-4 {% if metrics.out_of_stock_count > 0 %}border-danger{% else %}border-success{% endif %}">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="small text-muted fw-bold text-uppercase">Alertas de Inventario</div>
+          <div class="fs-4 fw-bold {% if metrics.out_of_stock_count > 0 %}text-danger{% else %}text-warning{% endif %} mt-1">
+            {{ metrics.out_of_stock_count }} Agotados / {{ metrics.low_stock_count }} Bajos
+          </div>
+          <small class="text-muted">Valor del Inventario: {{ currency }} {{ "{:,.2f}".format(metrics.inventory_valuation) }}</small>
+        </div>
+        <a href="{{ url_for('products.index', status='Agotada') }}" class="btn btn-sm btn-outline-danger">Revisar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts and Highlights -->
+<div class="row g-4 mb-4">
+  <!-- Sales Trend Chart -->
+  <div class="col-lg-8">
+    <div class="card citypet-card h-100 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Evolución de Ventas</h5>
+        <span class="badge bg-light text-secondary border">Últimos 7 días</span>
+      </div>
+      <div style="height: 260px; position: relative;">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Sellers -->
+  <div class="col-lg-4">
+    <div class="card citypet-card h-100 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-trophy-fill me-2 text-warning"></i>Productos Más Vendidos</h5>
+        <small class="text-muted">{{ selected_days }} días</small>
+      </div>
+      {% if metrics.top_sellers %}
+      <div class="list-group list-group-flush">
+        {% for ts in metrics.top_sellers %}
+        <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center border-bottom">
+          <div class="text-truncate me-2" style="max-width: 190px;">
+            <div class="fw-semibold text-truncate small" title="{{ ts.product_name_snapshot }}">{{ ts.product_name_snapshot }}</div>
+            <small class="text-muted">{{ ts.total_qty|int }} unids vendidas</small>
+          </div>
+          <span class="badge bg-light text-dark border">{{ currency }} {{ "{:,.0f}".format(ts.total_revenue) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted small py-4 text-center">No se registran ventas en este período.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Lower Sections: Recent Activity and Low Stock Alerts -->
+<div class="row g-4">
+  <!-- Recent Movements -->
+  <div class="col-lg-7">
+    <div class="card citypet-card h-100 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Actividad Reciente</h5>
+        <a href="{{ url_for('inventory.index') }}" class="btn btn-sm btn-link text-decoration-none">Ver Kardex</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Operación</th>
+              <th>Producto</th>
+              <th class="text-end">Cant.</th>
+              <th class="text-end">Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mov in metrics.recent_movements %}
+            <tr>
+              <td class="small text-muted">{{ mov.created_at.strftime('%d/%m %H:%M') }}</td>
+              <td>
+                <span class="badge {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada'] %}bg-success-subtle text-success border border-success-subtle{% elif mov.operation_type == 'Venta' %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-secondary-subtle text-secondary border{% endif %}">
+                  {{ mov.operation_type }}
+                </span>
+              </td>
+              <td class="fw-medium text-truncate" style="max-width: 180px;">{{ mov.product.name if mov.product else 'Producto' }}</td>
+              <td class="text-end fw-semibold {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada', 'Regalias', 'Devolucion_Cliente'] %}text-success{% else %}text-danger{% endif %}">
+                {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada', 'Regalias', 'Devolucion_Cliente'] %}+{% else %}-{% endif %}{{ mov.quantity|int }}
+              </td>
+              <td class="text-end text-muted">{{ mov.new_stock|int }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-3 text-muted small">No hay actividad reciente registrada.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert List -->
+  <div class="col-lg-5">
+    <div class="card citypet-card h-100 p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-shield-exclamation me-2 text-warning"></i>Productos con Existencias Bajas</h5>
+        <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-link text-decoration-none">Ver Catálogo</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Stock</th>
+              <th class="text-center">Mínimo</th>
+              <th class="text-end">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for prod in metrics.low_stock_products %}
+            <tr>
+              <td class="text-truncate fw-medium" style="max-width: 140px;">
+                <div class="small fw-semibold" title="{{ prod.name }}">{{ prod.name }}</div>
+                <small class="text-muted">{{ prod.code }}</small>
+              </td>
+              <td class="text-center fw-bold {% if prod.current_stock <= 0 %}text-danger{% else %}text-warning{% endif %}">
+                {{ prod.current_stock|int }}
+              </td>
+              <td class="text-center text-muted small">{{ prod.min_stock|int }}</td>
+              <td class="text-end">
+                {% if prod.status == 'Agotada' %}
+                <span class="badge badge-status-danger">Agotada</span>
+                {% elif prod.status == 'Menor al Minimo' %}
+                <span class="badge badge-status-warning">Bajo</span>
+                {% else %}
+                <span class="badge badge-status-ok">Ok</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-success small">
+                <i class="bi bi-check-circle me-1"></i> No hay productos con existencias críticas en este momento.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ctx = document.getElementById('salesChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ metrics.chart_labels|tojson }},
+        datasets: [{
+          label: 'Ventas ({{ currency }})',
+          data: {{ metrics.chart_values|tojson }},
+          borderColor: '#0F5B9E',
+          backgroundColor: 'rgba(15, 91, 158, 0.08)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#00B4D8'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return 'C$ ' + value.toLocaleString(); }
+            },
+            grid: { color: '#F1F5F9' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

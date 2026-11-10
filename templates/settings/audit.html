@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Registro de Auditoría{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1"><i class="bi bi-shield-check text-primary me-2"></i>Registro de Auditoría y Seguridad</h1>
+    <p class="text-muted small mb-0">Trazabilidad inmutable de todas las acciones críticas ejecutadas en la plataforma</p>
+  </div>
+</div>
+
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Acción</th>
+          <th>Entidad</th>
+          <th>ID / Ref.</th>
+          <th>Detalles</th>
+          <th>Usuario</th>
+          <th>IP Origen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="small text-muted">{{ log.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+          <td>
+            <span class="badge {% if 'DELETE' in log.action or 'VOID' in log.action %}bg-danger-subtle text-danger border border-danger-subtle{% elif 'CREATE' in log.action or 'SALE' in log.action %}bg-success-subtle text-success border border-success-subtle{% else %}bg-light text-dark border{% endif %}">
+              {{ log.action }}
+            </span>
+          </td>
+          <td class="small fw-semibold">{{ log.entity_type }}</td>
+          <td><code>{{ log.entity_id or '—' }}</code></td>
+          <td class="small text-truncate" style="max-width: 280px;" title="{{ log.details }}">{{ log.details or '—' }}</td>
+          <td class="small fw-semibold">{{ log.user_name or (log.user.full_name if log.user else 'Sistema') }}</td>
+          <td class="small text-muted font-monospace">{{ log.ip_address or 'Local' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">No hay eventos de auditoría registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="{% if theme_mode == 'oscuro' %}dark{% elif theme_mode == 'claro' %}light{% else %}light{% endif %}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CityPet{% endblock %} — Sistema Comercial e Inventario</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{{ system_logo_url }}">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Dynamic Palette & Theme Settings -->
+  <style>
+    :root {
+      --citypet-primary: {{ theme_primary_color }};
+      --citypet-primary-dark: {{ theme_primary_color }};
+      --citypet-teal: {{ theme_secondary_color }};
+    }
+  </style>
+
+  <!-- CityPet Custom Theme -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/citypet.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body data-user-role="{{ current_user.role if current_user.is_authenticated else 'guest' }}">
+
+<div class="d-flex" id="wrapper">
+  {% if current_user.is_authenticated %}
+  <!-- Mobile Backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="CityPetUI.closeMobileSidebar()"></div>
+
+  <!-- Simplified 7-Section Sidebar ("Menos opciones, más claridad") -->
+  <nav id="sidebar-wrapper" aria-label="Navegación Principal">
+    <div class="sidebar-brand d-flex align-items-center gap-2">
+      <img src="{{ system_logo_url }}" alt="CityPet Logo">
+      <div class="brand-text">
+        <div class="fw-bold fs-6 text-white leading-tight">CityPet</div>
+        <small class="text-white-50" style="font-size: 0.72rem;">Gestión Comercial</small>
+      </div>
+    </div>
+
+    <div class="sidebar-nav-container list-group list-group-flush pt-3 pb-3">
+      <!-- 1. Inicio -->
+      <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="1. Inicio">
+        <i class="bi bi-grid-1x2-fill"></i> <span>Inicio</span>
+      </a>
+
+      <!-- 2. Ventas -->
+      <a href="{{ url_for('sales.pos') }}" class="nav-link {% if request.endpoint and ('sales' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="2. Ventas y Cobros">
+        <i class="bi bi-cart-check-fill"></i> <span>Ventas</span>
+      </a>
+      {% if request.endpoint and ('sales' in request.endpoint) %}
+      <div class="ps-4 pb-1 small">
+        <a href="{{ url_for('sales.pos') }}" class="nav-link py-1 {% if request.endpoint == 'sales.pos' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-plus-circle me-1"></i> Punto de Venta (POS)
+        </a>
+        <a href="{{ url_for('sales.index') }}" class="nav-link py-1 {% if request.endpoint == 'sales.index' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-receipt me-1"></i> Historial de Facturas
+        </a>
+        {% if not current_user.is_employee %}
+        <a href="{{ url_for('sales.abonos_list') }}" class="nav-link py-1 {% if request.endpoint == 'sales.abonos_list' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-cash-coin me-1"></i> Cobros y Abonos
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- 3. Compras -->
+      {% if not current_user.is_employee %}
+      <a href="{{ url_for('purchases.index') }}" class="nav-link {% if request.endpoint and ('purchases' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="3. Compras y Pagos">
+        <i class="bi bi-bag-plus-fill"></i> <span>Compras</span>
+      </a>
+      {% if request.endpoint and ('purchases' in request.endpoint) %}
+      <div class="ps-4 pb-1 small">
+        <a href="{{ url_for('purchases.new') }}" class="nav-link py-1 {% if request.endpoint == 'purchases.new' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-plus-circle me-1"></i> Registrar Compra
+        </a>
+        <a href="{{ url_for('purchases.index') }}" class="nav-link py-1 {% if request.endpoint == 'purchases.index' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-journal-check me-1"></i> Compras y Cuentas por Pagar
+        </a>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      <!-- 4. Inventario -->
+      <a href="{{ url_for('products.index') }}" class="nav-link {% if request.endpoint and ('products' in request.endpoint or 'inventory' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="4. Inventario y Existencias">
+        <i class="bi bi-box-seam-fill"></i> <span>Inventario</span>
+      </a>
+      {% if request.endpoint and ('products' in request.endpoint or 'inventory' in request.endpoint) %}
+      <div class="ps-4 pb-1 small">
+        <a href="{{ url_for('products.index') }}" class="nav-link py-1 {% if 'products' in request.endpoint %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-boxes me-1"></i> Catálogo de Productos
+        </a>
+        {% if not current_user.is_employee %}
+        <a href="{{ url_for('inventory.index') }}" class="nav-link py-1 {% if request.endpoint == 'inventory.index' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-arrow-left-right me-1"></i> Movimientos
+        </a>
+        <a href="{{ url_for('inventory.reconciliation') }}" class="nav-link py-1 {% if request.endpoint == 'inventory.reconciliation' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-calculator me-1"></i> Conciliación y Ajustes
+        </a>
+        <a href="{{ url_for('inventory.audit') }}" class="nav-link py-1 {% if request.endpoint == 'inventory.audit' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-clipboard-check me-1"></i> Conteo Físico
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- 5. Clientes -->
+      <a href="{{ url_for('clients.index') }}" class="nav-link {% if request.endpoint and ('clients' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="5. Clientes y Créditos">
+        <i class="bi bi-people-fill"></i> <span>Clientes</span>
+      </a>
+
+      <!-- 6. Proveedores -->
+      {% if not current_user.is_employee %}
+      <a href="{{ url_for('suppliers.index') }}" class="nav-link {% if request.endpoint and ('suppliers' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="6. Proveedores y Deudas">
+        <i class="bi bi-truck"></i> <span>Proveedores</span>
+      </a>
+      {% endif %}
+
+      <!-- 7. Reportes -->
+      <a href="{{ url_for('reports.daily') if not current_user.is_employee else url_for('reports.index') }}" class="nav-link {% if request.endpoint and ('reports' in request.endpoint or 'finances' in request.endpoint or 'receipts' in request.endpoint) %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="7. Reportes y Finanzas">
+        <i class="bi bi-bar-chart-line-fill"></i> <span>Reportes</span>
+      </a>
+      {% if request.endpoint and ('reports' in request.endpoint or 'finances' in request.endpoint or 'receipts' in request.endpoint) %}
+      <div class="ps-4 pb-1 small">
+        {% if not current_user.is_employee %}
+        <a href="{{ url_for('reports.daily') }}" class="nav-link py-1 {% if request.endpoint == 'reports.daily' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-calendar2-day me-1"></i> Cierre Diario
+        </a>
+        <a href="{{ url_for('reports.monthly') }}" class="nav-link py-1 {% if request.endpoint == 'reports.monthly' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-calendar3 me-1"></i> Balance Mensual
+        </a>
+        <a href="{{ url_for('finances.index') }}" class="nav-link py-1 {% if 'finances' in request.endpoint %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-cash-stack me-1"></i> Caja e Ingresos/Gastos
+        </a>
+        {% endif %}
+        <a href="{{ url_for('receipts.index') }}" class="nav-link py-1 {% if 'receipts' in request.endpoint %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-file-earmark-text me-1"></i> Comprobantes y Recibos
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="nav-link py-1 {% if request.endpoint == 'reports.index' %}text-white fw-bold{% else %}text-white-50{% endif %}">
+          <i class="bi bi-table me-1"></i> Exportar Excel / PDF
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar Collapse Footer -->
+    <div class="sidebar-footer">
+      <span class="small text-white-50 footer-text">Menú Simplificado</span>
+      <button class="btn btn-sm btn-link text-white p-0" id="sidebarCollapseBtn" onclick="CityPetUI.toggleSidebarCollapse()" title="Contraer / Expandir menú">
+        <i class="bi bi-chevron-bar-left fs-5" id="sidebarCollapseIcon"></i>
+      </button>
+    </div>
+  </nav>
+  {% endif %}
+
+  <!-- Page Content -->
+  <div id="page-content-wrapper">
+    {% if current_user.is_authenticated %}
+    <!-- Topbar -->
+    <header class="citypet-topbar d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-secondary btn-sm" id="sidebarToggle" onclick="CityPetUI.toggleSidebar()" title="Alternar menú lateral">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <span class="d-none d-md-inline text-muted fw-medium fs-6">
+          {{ company_name }} <span class="badge bg-light text-dark border ms-1">{{ company_ruc }}</span>
+          {% if is_staging %}
+          <span class="badge bg-warning text-dark ms-1" title="Entorno independiente de pruebas (Staging)">ENTORNO DE PRUEBAS (STAGING)</span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Discrete Step-by-Step Window Tutorial Button (Section 12) -->
+        <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" id="btnWindowTutorial" onclick="CityPetInteractiveTour.showWindowGuide()" title="Tutorial interactivo paso a paso de esta ventana">
+          <i class="bi bi-mortarboard-fill"></i> <span class="d-none d-sm-inline">Tutorial de esta ventana</span>
+        </button>
+
+        <!-- Practice Mode Toggle -->
+        <button class="btn btn-sm btn-outline-warning d-none d-md-inline-flex align-items-center gap-1" id="btnToggleDemoMode" onclick="CityPetInteractiveTour.toggleDemoMode()" title="Entorno de práctica seguro sin alterar datos reales">
+          <i class="bi bi-shield-check"></i> <span id="demoModeBtnText">Modo Práctica</span>
+        </button>
+
+        <a href="{{ url_for('sales.pos') }}" class="btn btn-sm btn-citypet-primary d-inline-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-cart-plus"></i> <span class="d-none d-sm-inline">Nueva Venta</span>
+        </a>
+
+        <!-- Discrete Settings Gear Menu (Section 11.1) -->
+        {% if not current_user.is_employee %}
+        <div class="dropdown">
+          <button class="btn btn-light btn-sm border d-flex align-items-center justify-content-center" type="button" id="settingsGearMenuBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Configuración y Herramientas del Sistema">
+            <i class="bi bi-gear-fill fs-5 text-secondary"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="settingsGearMenuBtn">
+            <li class="dropdown-header fw-bold text-uppercase small text-muted">Configuración y Sistema</li>
+            <li><a class="dropdown-item" href="{{ url_for('imports.index') }}"><i class="bi bi-file-earmark-excel text-success me-2"></i> Importación y Conciliación Excel</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('settings.appearance') }}"><i class="bi bi-palette text-primary me-2"></i> Apariencia y Logotipos</a></li>
+            {% if current_user.is_owner %}
+            <li><hr class="dropdown-divider"></li>
+            <li class="dropdown-header fw-bold text-uppercase small text-muted">Seguridad (Propietario)</li>
+            <li><a class="dropdown-item" href="{{ url_for('settings.users') }}"><i class="bi bi-person-gear text-info me-2"></i> Usuarios, Roles y Permisos</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('settings.backups') }}"><i class="bi bi-database-check text-warning me-2"></i> Respaldos y Restauración</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('settings.telegram') }}"><i class="bi bi-telegram text-primary me-2"></i> Notificaciones Telegram</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('settings.audit') }}"><i class="bi bi-shield-lock text-dark me-2"></i> Bitácora de Auditoría</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- User profile dropdown -->
+        <div class="dropdown">
+          <button class="btn btn-light btn-sm dropdown-toggle border d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle fs-5 text-primary"></i>
+            <div class="text-start d-none d-sm-block">
+              <span class="fw-semibold d-block text-truncate" style="max-width: 120px;">{{ current_user.full_name }}</span>
+              <small class="text-muted d-block" style="font-size: 0.72rem; text-transform: capitalize;">{{ current_user.role_label }}</small>
+            </div>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person me-2"></i> Mi Perfil</a></li>
+            <li><a class="dropdown-item text-primary" href="javascript:void(0)" onclick="CityPetInteractiveTour.showWindowGuide()"><i class="bi bi-mortarboard me-2"></i> Tutorial de esta ventana</a></li>
+            <li><a class="dropdown-item text-warning" href="javascript:void(0)" onclick="CityPetInteractiveTour.toggleDemoMode()"><i class="bi bi-shield-check me-2"></i> Alternar Modo Práctica</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- Demo Mode Sticky Notification Banner -->
+    <div id="citypetDemoBanner" class="citypet-demo-banner d-none">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shield-exclamation fs-5"></i>
+        <div>
+          <span>MODO PRÁCTICA ACTIVO:</span> Estás en un entorno aislado de entrenamiento. Ninguna operación afectará el inventario, clientes ni finanzas reales.
+        </div>
+      </div>
+      <button type="button" class="btn btn-dark btn-sm fw-bold shadow-sm" onclick="CityPetInteractiveTour.toggleDemoMode(false)">
+        <i class="bi bi-x-circle me-1"></i> Salir de Práctica
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- Main Container -->
+    <main class="container-fluid p-3 p-md-4">
+      <!-- Flash Alert messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<!-- Mobile Bottom Navigation Bar (Visible on < 992px) -->
+<nav class="citypet-bottom-nav d-lg-none">
+  <a href="{{ url_for('dashboard.index') }}" class="{% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+    <i class="bi bi-grid-1x2-fill"></i>
+    <span>Inicio</span>
+  </a>
+  <a href="{{ url_for('sales.pos') }}" class="{% if request.endpoint and 'sales' in request.endpoint %}active{% endif %}">
+    <i class="bi bi-cart-check-fill"></i>
+    <span>Ventas</span>
+  </a>
+  <a href="{{ url_for('products.index') }}" class="{% if request.endpoint and ('products' in request.endpoint or 'inventory' in request.endpoint) %}active{% endif %}">
+    <i class="bi bi-box-seam-fill"></i>
+    <span>Inventario</span>
+  </a>
+  <a href="{{ url_for('clients.index') }}" class="{% if request.endpoint and 'clients' in request.endpoint %}active{% endif %}">
+    <i class="bi bi-people-fill"></i>
+    <span>Clientes</span>
+  </a>
+  <a href="javascript:void(0)" id="mobileMenuBtn" onclick="document.getElementById('sidebar-wrapper').classList.toggle('toggled')">
+    <i class="bi bi-list"></i>
+    <span>Menú</span>
+  </a>
+</nav>
+{% endif %}
+
+<!-- Product Image Lightbox Modal -->
+<div class="modal fade" id="citypetImageLightboxModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom border-secondary py-2">
+        <h6 class="modal-title fw-bold text-truncate" id="lightboxTitle">Fotografía del Producto</h6>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+          <button type="button" class="btn btn-sm btn-outline-light" onclick="CityPetLightbox.zoomOut()" title="Alejar"><i class="bi bi-zoom-out"></i></button>
+          <span class="small font-monospace" id="lightboxZoomLevel">100%</span>
+          <button type="button" class="btn btn-sm btn-outline-light" onclick="CityPetLightbox.zoomIn()" title="Acercar"><i class="bi bi-zoom-in"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-light" onclick="CityPetLightbox.resetZoom()" title="Restablecer"><i class="bi bi-arrows-angle-contract"></i></button>
+          <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0 text-center overflow-hidden position-relative" style="min-height: 420px; max-height: 75vh; display: flex; align-items: center; justify-content: center; background: #0B0F19;">
+        <img id="lightboxImg" src="" alt="Vista ampliada" style="max-height: 70vh; max-width: 90%; object-fit: contain; transition: transform 0.2s ease;">
+      </div>
+      <div class="modal-footer border-top border-secondary py-2 justify-content-between">
+        <div class="small text-secondary" id="lightboxSubtitle">Código y detalles</div>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index: 1100;"></div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/citypet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/citypet-tour.js') }}"></script>
+<script src="{{ url_for('static', filename='js/citypet-interactive-tour.js') }}"></script>
+
+<!-- Auto theme sync if 'sistema' -->
+<script>
+  (function() {
+    const themeMode = '{{ theme_mode }}';
+    if (themeMode === 'sistema') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-bs-theme', prefersDark ? 'dark' : 'light');
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+      });
+    }
+  })();
+</script>
+
+{% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

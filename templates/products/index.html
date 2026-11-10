@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% block title %}Catálogo de Productos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Catálogo de Productos</h1>
+    <p class="text-muted small mb-0">Gestión de artículos, precios, inventario y existencias mínimas</p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('inventory.audit') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-clipboard-check"></i> Auditoría Física
+    </a>
+    {% if not current_user.is_employee %}
+    <button type="button" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newProductModal">
+      <i class="bi bi-plus-circle"></i> Nuevo Producto
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filters & Search Toolbar -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Buscar por nombre, código o código de barras..." value="{{ search }}">
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <select name="category" class="form-select form-select-sm">
+        <option value="">Todas las categorías</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">Todos los estados</option>
+        <option value="Ok" {% if selected_status == 'Ok' %}selected{% endif %}>Ok (Stock seguro)</option>
+        <option value="Menor al Minimo" {% if selected_status == 'Menor al Minimo' %}selected{% endif %}>Menor al Mínimo</option>
+        <option value="Agotada" {% if selected_status == 'Agotada' %}selected{% endif %}>Agotada</option>
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <select name="supplier_id" class="form-select form-select-sm">
+        <option value="">Todos los proveedores</option>
+        {% for supp in suppliers %}
+        <option value="{{ supp.id }}" {% if selected_supplier == supp.id %}selected{% endif %}>{{ supp.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100" title="Filtrar">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if search or selected_category or selected_status or selected_supplier %}
+      <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-outline-secondary" title="Limpiar filtros">
+        <i class="bi bi-x-lg"></i>
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Products Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th>Categoría</th>
+          {% if not current_user.is_employee %}
+          <th class="text-end">Costo Compra</th>
+          {% endif %}
+          <th class="text-end">Precio Venta</th>
+          <th class="text-center">Stock Actual</th>
+          <th class="text-center">Mínimo</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prod in products %}
+        <tr class="{% if not prod.is_active %}opacity-50 bg-light{% endif %}">
+          <td class="fw-semibold text-secondary">
+            <code>{{ prod.code }}</code>
+            {% if prod.barcode %}<div class="small text-muted" style="font-size: 0.72rem;"><i class="bi bi-upc"></i> {{ prod.barcode }}</div>{% endif %}
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              {% if prod.image_url %}
+              <div class="product-thumbnail-wrapper" onclick="CityPetLightbox.open('{{ prod.image_url }}', '{{ prod.name|escape }}', 'Código: {{ prod.code }} — Existencias: {{ prod.current_stock|int }} {{ prod.unit }} | Precio: {{ currency }} {{ '{:,.2f}'.format(prod.sale_price) }}')" title="Clic para ampliar fotografía">
+                <img src="{{ prod.image_url }}" alt="{{ prod.name }}" class="rounded border" style="width: 42px; height: 42px; object-fit: cover;">
+                <span class="zoom-icon-badge"><i class="bi bi-arrows-fullscreen"></i></span>
+              </div>
+              {% else %}
+              <div class="rounded bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 42px; height: 42px;" title="Sin fotografía registrada">
+                <i class="bi bi-capsule fs-5"></i>
+              </div>
+              {% endif %}
+              <div>
+                <a href="{{ url_for('products.history', id=prod.id) }}" class="fw-bold text-decoration-none text-dark d-block">
+                  {{ prod.name }}
+                </a>
+                <small class="text-muted">{{ prod.unit }} | Almacén: {{ prod.warehouse }}</small>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge bg-light text-secondary border">{{ prod.category }}</span></td>
+          {% if not current_user.is_employee %}
+          <td class="text-end text-muted small">{{ currency }} {{ "{:,.2f}".format(prod.purchase_price) }}</td>
+          {% endif %}
+          <td class="text-end fw-bold text-dark">{{ currency }} {{ "{:,.2f}".format(prod.sale_price) }}</td>
+          <td class="text-center">
+            <span class="fs-6 fw-bold {% if prod.current_stock <= 0 %}text-danger{% elif prod.current_stock < prod.min_stock %}text-warning{% else %}text-success{% endif %}">
+              {{ prod.current_stock|int }}
+            </span>
+          </td>
+          <td class="text-center text-muted small">{{ prod.min_stock|int }}</td>
+          <td class="text-center">
+            {% if prod.status == 'Agotada' %}
+            <span class="badge badge-status-danger">Agotada</span>
+            {% elif prod.status == 'Menor al Minimo' %}
+            <span class="badge badge-status-warning">Menor al Mínimo</span>
+            {% else %}
+            <span class="badge badge-status-ok">Ok</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('products.history', id=prod.id) }}" class="btn btn-outline-secondary" title="Ver Historial de Movimientos">
+                <i class="bi bi-clock-history"></i>
+              </a>
+              {% if not current_user.is_employee %}
+              <button type="button" class="btn btn-outline-primary" title="Editar" 
+                onclick="openEditProductModal('{{ prod.id }}', '{{ prod.code }}', '{{ prod.name|escape }}', '{{ prod.category|escape }}', '{{ prod.warehouse|escape }}', '{{ prod.unit|escape }}', '{{ prod.purchase_price }}', '{{ prod.sale_price }}', '{{ prod.min_stock }}', '{{ prod.physical_stock }}', '{{ prod.barcode or '' }}', '{{ prod.description or '' }}', '{{ prod.supplier_id or '' }}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form method="POST" action="{{ url_for('products.toggle_status', id=prod.id) }}" class="d-inline" onsubmit="return confirm('¿Desea cambiar el estado de este producto?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-{{ 'warning' if prod.is_active else 'success' }}" title="{{ 'Desactivar' if prod.is_active else 'Activar' }}">
+                  <i class="bi bi-{{ 'eye-slash' if prod.is_active else 'check-circle' }}"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center py-5 text-muted">
+            <i class="bi bi-box-seam fs-1 d-block mb-2 text-secondary"></i>
+            No se encontraron productos registrados o que coincidan con los filtros.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Producto -->
+<div class="modal fade" id="newProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('products.create') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle text-primary me-2"></i>Registrar Nuevo Producto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Código Producto (opcional)</label>
+              <input type="text" name="code" class="form-control" placeholder="Automático (Ej: CP000041)">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Nombre del Producto *</label>
+              <input type="text" name="name" class="form-control" placeholder="Ej. AMOXIN 250 MG 30 ML" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Categoría</label>
+              <input type="text" name="category" class="form-control" list="categoryOptions" placeholder="Antibióticos, Vacunas...">
+              <datalist id="categoryOptions">
+                {% for cat in categories %}<option value="{{ cat }}">{% endfor %}
+              </datalist>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Unidad de Medida</label>
+              <input type="text" name="unit" class="form-control" value="Unid" placeholder="Unid, Frasco, Caja...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Almacén</label>
+              <input type="text" name="warehouse" class="form-control" value="Principal">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Código de Barras</label>
+              <input type="text" name="barcode" class="form-control" placeholder="Escanear o ingresar código...">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Proveedor Asociado</label>
+              <select name="supplier_id" class="form-select">
+                <option value="">Seleccione proveedor...</option>
+                {% for supp in suppliers %}
+                <option value="{{ supp.id }}">{{ supp.company_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Costo Compra ({{ currency }})</label>
+              <input type="number" step="0.01" min="0" name="purchase_price" class="form-control" value="0.00" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Precio Venta ({{ currency }}) *</label>
+              <input type="number" step="0.01" min="0" name="sale_price" class="form-control" value="0.00" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Stock Inicial</label>
+              <input type="number" step="1" min="0" name="initial_stock" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Stock Mínimo</label>
+              <input type="number" step="1" min="0" name="min_stock" class="form-control" value="5">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Imagen del Producto (opcional)</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Descripción u Observaciones</label>
+              <textarea name="description" class="form-control" rows="2" placeholder="Indicaciones, dosis, principios activos..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Producto -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editProductForm" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Editar Producto <span id="editProductCodeBadge" class="badge bg-secondary"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Nombre del Producto *</label>
+              <input type="text" id="edit_name" name="name" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Categoría</label>
+              <input type="text" id="edit_category" name="category" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Unidad de Medida</label>
+              <input type="text" id="edit_unit" name="unit" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Almacén</label>
+              <input type="text" id="edit_warehouse" name="warehouse" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Código de Barras</label>
+              <input type="text" id="edit_barcode" name="barcode" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Proveedor Asociado</label>
+              <select id="edit_supplier_id" name="supplier_id" class="form-select">
+                <option value="">Seleccione proveedor...</option>
+                {% for supp in suppliers %}
+                <option value="{{ supp.id }}">{{ supp.company_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Costo Compra ({{ currency }})</label>
+              <input type="number" step="0.01" min="0" id="edit_purchase_price" name="purchase_price" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Precio Venta ({{ currency }}) *</label>
+              <input type="number" step="0.01" min="0" id="edit_sale_price" name="sale_price" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Stock Mínimo</label>
+              <input type="number" step="1" min="0" id="edit_min_stock" name="min_stock" class="form-control" required>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Reemplazar Imagen</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Descripción u Observaciones</label>
+              <textarea id="edit_description" name="description" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Actualizar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditProductModal(id, code, name, category, warehouse, unit, purchase_price, sale_price, min_stock, physical_stock, barcode, description, supplier_id) {
+  const form = document.getElementById('editProductForm');
+  form.action = `/products/${id}/edit`;
+  document.getElementById('editProductCodeBadge').textContent = code;
+  document.getElementById('edit_name').value = name;
+  document.getElementById('edit_category').value = category;
+  document.getElementById('edit_warehouse').value = warehouse;
+  document.getElementById('edit_unit').value = unit;
+  document.getElementById('edit_purchase_price').value = purchase_price;
+  document.getElementById('edit_sale_price').value = sale_price;
+  document.getElementById('edit_min_stock').value = min_stock;
+  document.getElementById('edit_barcode').value = barcode;
+  document.getElementById('edit_description').value = description;
+  document.getElementById('edit_supplier_id').value = supplier_id;
+
+  const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+  modal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% block title %}Proveedores y Cuentas por Pagar{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Proveedores y Laboratorios</h1>
+    <p class="text-muted small mb-0">Gestión de distribuidores, productos suministrados, compras y cuentas por pagar ({{ suppliers|length }} proveedores)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+    <button type="button" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newSupplierModal">
+      <i class="bi bi-truck"></i> Nuevo Proveedor
+    </button>
+  </div>
+</div>
+
+<!-- Search & Debt Filter Bar -->
+<div class="card citypet-card border-0 mb-4 p-3">
+  <form method="GET" class="row g-2 align-items-center">
+    <div class="col-md-7">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Buscar proveedor por nombre comercial, código, contacto o teléfono..." value="{{ search }}">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="debt" class="form-select form-select-sm">
+        <option value="">Todas las Cuentas</option>
+        <option value="pending" {% if debt_filter == 'pending' %}selected{% endif %}>Con Saldo por Pagar</option>
+        <option value="overdue" {% if debt_filter == 'overdue' %}selected{% endif %}>Con Compras Vencidas</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-citypet-primary w-100"><i class="bi bi-funnel"></i> Filtrar</button>
+      {% if search or debt_filter %}
+      <a href="{{ url_for('suppliers.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Suppliers Table -->
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Nombre Comercial</th>
+          <th>Contacto / Teléfono</th>
+          <th>RUC</th>
+          <th>Productos Suministrados</th>
+          <th class="text-end">Total Adeudado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in suppliers %}
+        <tr>
+          <td><code>{{ s.code }}</code></td>
+          <td>
+            <a href="{{ url_for('suppliers.history', id=s.id) }}" class="fw-bold text-primary text-decoration-none">
+              {{ s.company_name }}
+            </a>
+          </td>
+          <td class="small">
+            <div>{{ s.contact_name or '—' }}</div>
+            {% if s.phone %}<small class="text-muted">{{ s.phone }}</small>{% endif %}
+          </td>
+          <td class="text-muted small">{{ s.ruc or '—' }}</td>
+          <td class="small text-truncate" style="max-width: 240px;" title="{{ s.supplied_products }}">{{ s.supplied_products or '—' }}</td>
+          <td class="text-end fw-bold {% if s.total_debt > 0.009 %}text-danger{% else %}text-success{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format(s.total_debt) }}
+            {% if s.pending_purchases|length > 0 %}
+            <small class="d-block text-muted fw-normal" style="font-size: 0.72rem;">{{ s.pending_purchases|length }} compra(s) abierta(s)</small>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('suppliers.history', id=s.id) }}" class="btn btn-outline-primary" title="Ver Estado de Cuenta, Compras y Pagos">
+                <i class="bi bi-building-check"></i> Perfil y Deudas
+              </a>
+              <button type="button" class="btn btn-outline-secondary" title="Editar"
+                onclick="openEditSupplierModal('{{ s.id }}', '{{ s.code }}', '{{ s.company_name|escape }}', '{{ s.contact_name|escape if s.contact_name else '' }}', '{{ s.phone or '' }}', '{{ s.email or '' }}', '{{ s.ruc or '' }}', '{{ s.address|escape if s.address else '' }}', '{{ s.supplied_products|escape if s.supplied_products else '' }}', '{{ s.notes|escape if s.notes else '' }}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">No se encontraron proveedores registrados.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Proveedor -->
+<div class="modal fade" id="newSupplierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('suppliers.create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-truck text-primary me-2"></i>Registrar Nuevo Proveedor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Código Proveedor (opcional)</label>
+              <input type="text" name="code" class="form-control" placeholder="Automático (Ej. PROV-003)">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Nombre Comercial de la Empresa *</label>
+              <input type="text" name="company_name" class="form-control" placeholder="Ej. Novavet Nicaragua S.A." required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Nombre del Contacto / Agente</label>
+              <input type="text" name="contact_name" class="form-control" placeholder="Ej. Lic. Carlos Mendoza">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">RUC</label>
+              <input type="text" name="ruc" class="form-control" placeholder="J0310000000000">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Teléfono</label>
+              <input type="text" name="phone" class="form-control" placeholder="+505 2200-0000">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Correo Electrónico</label>
+              <input type="email" name="email" class="form-control" placeholder="ventas@proveedor.com">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Dirección</label>
+              <input type="text" name="address" class="form-control" placeholder="Dirección física del laboratorio o bodega...">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Productos o Líneas que Suministra</label>
+              <input type="text" name="supplied_products" class="form-control" placeholder="Antibióticos, desparasitantes, vacunas...">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Observaciones / Términos de pago</label>
+              <textarea name="notes" class="form-control" rows="2" placeholder="Condiciones de crédito, días de entrega..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Guardar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Proveedor -->
+<div class="modal fade" id="editSupplierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editSupplierForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Editar Proveedor <span id="editSuppCodeBadge" class="badge bg-secondary"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Nombre Comercial *</label>
+              <input type="text" id="edit_supp_name" name="company_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Contacto</label>
+              <input type="text" id="edit_supp_contact" name="contact_name" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">RUC</label>
+              <input type="text" id="edit_supp_ruc" name="ruc" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Teléfono</label>
+              <input type="text" id="edit_supp_phone" name="phone" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Correo Electrónico</label>
+              <input type="email" id="edit_supp_email" name="email" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Dirección</label>
+              <input type="text" id="edit_supp_address" name="address" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Productos Suministrados</label>
+              <input type="text" id="edit_supp_products" name="supplied_products" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Observaciones</label>
+              <textarea id="edit_supp_notes" name="notes" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Actualizar Proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditSupplierModal(id, code, name, contact, phone, email, ruc, addr, products, notes) {
+  const form = document.getElementById('editSupplierForm');
+  form.action = `/suppliers/${id}/edit`;
+  document.getElementById('editSuppCodeBadge').textContent = code;
+  document.getElementById('edit_supp_name').value = name;
+  document.getElementById('edit_supp_contact').value = contact;
+  document.getElementById('edit_supp_phone').value = phone;
+  document.getElementById('edit_supp_email').value = email;
+  document.getElementById('edit_supp_ruc').value = ruc;
+  document.getElementById('edit_supp_address').value = addr;
+  document.getElementById('edit_supp_products').value = products;
+  document.getElementById('edit_supp_notes').value = notes;
+  new bootstrap.Modal(document.getElementById('editSupplierModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Historial — {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('products.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver al Catálogo</a>
+      <h1 class="h3 fw-bold mb-0">{{ product.name }}</h1>
+      <span class="badge bg-secondary">{{ product.code }}</span>
+    </div>
+    <p class="text-muted small mb-0">Trazabilidad completa de entradas, salidas y existencias calculadas</p>
+  </div>
+  <div>
+    <span class="fs-5 fw-bold {% if product.current_stock <= 0 %}text-danger{% elif product.current_stock < product.min_stock %}text-warning{% else %}text-success{% endif %}">
+      Stock Actual: {{ product.current_stock|int }} {{ product.unit }}
+    </span>
+  </div>
+</div>
+
+<!-- Product Info & Photo Card -->
+<div class="card citypet-card border-0 p-3 mb-4">
+  <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+    <div class="text-center">
+      {% if product.image_url %}
+      <div class="product-thumbnail-wrapper" onclick="CityPetLightbox.open('{{ product.image_url }}', '{{ product.name|escape }}', 'Código: {{ product.code }} | Almacén: {{ product.warehouse }}')" title="Clic para ampliar imagen en pantalla completa">
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="rounded border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+        <span class="zoom-icon-badge"><i class="bi bi-arrows-fullscreen"></i> Ampliar</span>
+      </div>
+      {% else %}
+      <div class="rounded bg-light border d-flex flex-column align-items-center justify-content-center text-muted" style="width: 80px; height: 80px;">
+        <i class="bi bi-capsule fs-3"></i>
+        <small style="font-size: 0.65rem;">Sin foto</small>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="flex-grow-1">
+      <div class="row g-2">
+        <div class="col-6 col-md-3">
+          <small class="text-muted d-block">Categoría:</small>
+          <span class="fw-semibold">{{ product.category }}</span>
+        </div>
+        <div class="col-6 col-md-3">
+          <small class="text-muted d-block">Almacén / Bodega:</small>
+          <span class="fw-semibold">{{ product.warehouse }}</span>
+        </div>
+        <div class="col-6 col-md-3">
+          <small class="text-muted d-block">Precio Venta:</small>
+          <span class="fw-bold text-success">{{ currency }} {{ "{:,.2f}".format(product.sale_price) }}</span>
+        </div>
+        <div class="col-6 col-md-3">
+          <small class="text-muted d-block">Stock Mínimo:</small>
+          <span class="fw-semibold">{{ product.min_stock|int }} {{ product.unit }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código Movimiento</th>
+          <th>Fecha y Hora</th>
+          <th>Tipo de Operación</th>
+          <th class="text-end">Cantidad</th>
+          <th class="text-end">Stock Previo</th>
+          <th class="text-end">Stock Posterior</th>
+          <th class="text-end">Precio / Costo</th>
+          <th>Factura / Ref.</th>
+          <th>Motivo / Observaciones</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mov in movements %}
+        <tr>
+          <td><code>{{ mov.code }}</code></td>
+          <td class="small text-muted">{{ mov.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>
+            <span class="badge {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada', 'Regalias'] %}bg-success-subtle text-success border border-success-subtle{% elif mov.operation_type == 'Venta' %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+              {{ mov.operation_type }}
+            </span>
+          </td>
+          <td class="text-end fw-bold {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada', 'Regalias'] %}text-success{% else %}text-danger{% endif %}">
+            {% if mov.operation_type in ['Compra', 'Inventario_Inicial', 'Ajuste_Entrada', 'Regalias'] %}+{% else %}-{% endif %}{{ mov.quantity|int }}
+          </td>
+          <td class="text-end text-muted">{{ mov.previous_stock|int }}</td>
+          <td class="text-end fw-semibold text-dark">{{ mov.new_stock|int }}</td>
+          <td class="text-end text-muted small">
+            {{ currency }} {{ "{:,.2f}".format(mov.unit_price if mov.unit_price > 0 else mov.unit_cost) }}
+          </td>
+          <td class="small">{{ mov.invoice_number or '—' }}</td>
+          <td class="small text-truncate" style="max-width: 200px;" title="{{ mov.reason or '' }} {{ mov.notes or '' }}">
+            {{ mov.reason or mov.notes or '—' }}
+          </td>
+          <td class="small text-muted">{{ mov.user.full_name if mov.user else 'Sistema' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" class="text-center py-4 text-muted">No se registran movimientos para este producto.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

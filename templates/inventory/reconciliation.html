@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Conciliación Matemática de Inventario — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Conciliación Matemática de Inventario</h1>
+    <p class="text-muted small mb-0">
+      Verificación estricta: <code>Stock Inicial + Entradas − Salidas = Stock Teórico</code> vs Stock Sistema vs Conteo Físico
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('inventory.audit') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-clipboard-check"></i> Conteo Físico
+    </a>
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Movimientos
+    </a>
+  </div>
+</div>
+
+<!-- Discrepancy KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="citypet-card metric-card {% if discrepancies_count > 0 %}danger{% else %}success{% endif %} p-3">
+      <div class="metric-label">Productos con Discrepancia</div>
+      <div class="metric-value {% if discrepancies_count > 0 %}text-danger{% else %}text-success{% endif %} mt-1">
+        {{ discrepancies_count }} / {{ total_items }}
+      </div>
+      <small class="text-muted">
+        {% if discrepancies_count == 0 %}
+        ¡Inventario 100% cuadrado matemáticamente!
+        {% else %}
+        Requieren revisión y ajuste compensatorio
+        {% endif %}
+      </small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card info p-3">
+      <div class="metric-label">Fórmula de Cuadre</div>
+      <div class="metric-value text-primary fs-6 mt-2" style="font-family: monospace;">
+        Teórico = Inicial + In − Out
+      </div>
+      <small class="text-muted">Trazabilidad completa desde movimientos</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Auditoría Permanente</div>
+      <div class="metric-value text-dark fs-6 mt-2">
+        Ajustes Compensatorios
+      </div>
+      <small class="text-muted">Todos los ajustes quedan grabados en historial</small>
+    </div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="citypet-card p-3 mb-3 d-flex justify-content-between align-items-center">
+  <div class="d-flex gap-2">
+    <button class="btn btn-sm btn-outline-primary active" id="btnFilterAll" onclick="filterReconciliation('all')">
+      Todos ({{ total_items }})
+    </button>
+    <button class="btn btn-sm btn-outline-danger" id="btnFilterDisc" onclick="filterReconciliation('discrepancies')">
+      Solo Discrepancias ({{ discrepancies_count }})
+    </button>
+  </div>
+  <div class="w-25">
+    <input type="text" class="form-control form-control-sm" id="reconSearchInput" placeholder="Buscar producto o código..." oninput="searchRecon()">
+  </div>
+</div>
+
+<!-- Reconciliation Table -->
+<div class="citypet-card">
+  <div class="table-responsive">
+    <table class="citypet-table table-hover align-middle" id="reconTable">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th class="text-end">Inicial</th>
+          <th class="text-end text-success">+Entradas</th>
+          <th class="text-end text-danger">−Salidas</th>
+          <th class="text-end fw-bold">Stock Teórico</th>
+          <th class="text-end fw-bold">Stock Sistema</th>
+          <th class="text-end text-primary">Conteo Físico</th>
+          <th class="text-center">Dif. Teórica</th>
+          <th class="text-center">Dif. Física</th>
+          <th class="text-center">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in items %}
+        <tr class="recon-row {% if row.has_discrepancy %}table-warning-row{% endif %}" 
+            data-has-disc="{{ 'true' if row.has_discrepancy else 'false' }}"
+            data-code="{{ row.code.lower() }}"
+            data-name="{{ row.name.lower() }}">
+          <td><code>{{ row.code }}</code></td>
+          <td class="fw-semibold">
+            {{ row.name }}
+            {% if row.has_discrepancy %}
+            <span class="badge bg-danger ms-1" style="font-size: 0.65rem;">Descuadre</span>
+            {% else %}
+            <span class="badge bg-success ms-1" style="font-size: 0.65rem;">Cuadrado</span>
+            {% endif %}
+          </td>
+          <td class="text-end text-muted">{{ row.initial_stock }}</td>
+          <td class="text-end text-success">+{{ row.total_in }}</td>
+          <td class="text-end text-danger">−{{ row.total_out }}</td>
+          <td class="text-end fw-bold">{{ row.theoretical_stock }} {{ row.unit }}</td>
+          <td class="text-end fw-bold">{{ row.current_stock }} {{ row.unit }}</td>
+          <td class="text-end text-primary fw-bold">{{ row.physical_stock }} {{ row.unit }}</td>
+          <td class="text-center">
+            {% if row.history_diff == 0 %}
+            <span class="badge bg-success-subtle text-success">0</span>
+            {% else %}
+            <span class="badge bg-danger">{{ "{:+.2f}".format(row.history_diff) }}</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if row.physical_diff == 0 %}
+            <span class="badge bg-success-subtle text-success">0</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">{{ "{:+.2f}".format(row.physical_diff) }}</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-primary" 
+                    onclick="openAdjustModal('{{ row.product_id }}', '{{ row.name|replace("'", "\\'") }}', '{{ row.current_stock }}', '{{ row.physical_stock }}', '{{ row.theoretical_stock }}', '{{ row.unit }}')">
+              <i class="bi bi-tools"></i> Cuadrar
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Cuadrar Inventario -->
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('inventory.reconciliation') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="product_id" id="modalProductId">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Ajuste de Conciliación de Stock</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="bg-light p-3 rounded border mb-3">
+            <h6 class="fw-bold mb-2 text-primary" id="modalProductName">-</h6>
+            <div class="row g-2 small">
+              <div class="col-6">Stock Actual Sistema: <strong id="modalCurrentStock" class="d-block fs-6">-</strong></div>
+              <div class="col-6">Conteo Físico Real: <strong id="modalPhysicalStock" class="d-block fs-6 text-primary">-</strong></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nuevo Stock Objetivo *</label>
+            <div class="input-group">
+              <input type="number" step="0.01" min="0" class="form-control form-control-lg fw-bold" name="target_stock" id="modalTargetStock" required>
+              <span class="input-group-text" id="modalUnit">Unid</span>
+            </div>
+            <div class="form-text">
+              El sistema generará automáticamente un movimiento compensatorio (Entrada o Salida) para cuadrar la existencia.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Motivo / Justificación del Ajuste *</label>
+            <textarea class="form-control" name="reason" rows="3" required placeholder="Explique la causa del descuadre (ej: 'Alineación con conteo físico mensual verificado en bodega principal')"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success fw-bold">
+            <i class="bi bi-check-lg"></i> Aplicar y Cuadrar Stock
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentFilter = 'all';
+
+function filterReconciliation(type) {
+  currentFilter = type;
+  document.getElementById('btnFilterAll').classList.toggle('active', type === 'all');
+  document.getElementById('btnFilterDisc').classList.toggle('active', type === 'discrepancies');
+  applyFilters();
+}
+
+function searchRecon() {
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById('reconSearchInput').value.toLowerCase().trim();
+  document.querySelectorAll('.recon-row').forEach(row => {
+    const hasDisc = row.getAttribute('data-has-disc') === 'true';
+    const code = row.getAttribute('data-code');
+    const name = row.getAttribute('data-name');
+    
+    const matchesFilter = (currentFilter === 'all') || (currentFilter === 'discrepancies' && hasDisc);
+    const matchesSearch = code.includes(q) || name.includes(q);
+
+    row.style.display = (matchesFilter && matchesSearch) ? '' : 'none';
+  });
+}
+
+function openAdjustModal(prodId, name, currStock, physStock, theoStock, unit) {
+  document.getElementById('modalProductId').value = prodId;
+  document.getElementById('modalProductName').textContent = name;
+  document.getElementById('modalCurrentStock').textContent = currStock + ' ' + unit;
+  document.getElementById('modalPhysicalStock').textContent = physStock + ' ' + unit;
+  document.getElementById('modalTargetStock').value = physStock; // prefill with physical count
+  document.getElementById('modalUnit').textContent = unit;
+
+  new bootstrap.Modal(document.getElementById('adjustModal')).show();
+}
+</script>
+{% endblock %}

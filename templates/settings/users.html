@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios y Permisos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>Gestión de Usuarios, Roles y Permisos</h1>
+    <p class="text-muted small mb-0">Control de acceso basado en roles, autorización de excepciones de crédito y protección contra accesos fallidos</p>
+  </div>
+  <button type="button" class="btn btn-citypet-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#newUserModal">
+    <i class="bi bi-person-plus-fill"></i> Crear Usuario
+  </button>
+</div>
+
+<div class="citypet-card mb-4 p-3 bg-light">
+  <div class="d-flex gap-3">
+    <i class="bi bi-shield-lock-fill text-primary fs-3"></i>
+    <div class="small">
+      <strong>Estructura de Privilegios por Perfil (Validada en Backend):</strong><br>
+      • <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">Propietario:</span> Acceso total al sistema, autorización de excepciones de crédito, gestión de usuarios, auditoría, configuración de Telegram y respaldos.<br>
+      • <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle fw-semibold">Administrador:</span> Control operativo y comercial: compras, ventas, inventario, clientes, proveedores y reportes. Puede recibir permiso para autorizar excepciones de crédito.<br>
+      • <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">Empleado:</span> Registro ágil de ventas en POS, consulta de catálogo y clientes. Sin acceso a compras, finanzas ni configuración.
+    </div>
+  </div>
+</div>
+
+<div class="citypet-card">
+  <div class="table-responsive">
+    <table class="citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Nombre Completo</th>
+          <th class="text-center">Rol</th>
+          <th class="text-center">Autoriza Crédito</th>
+          <th class="text-center">Estado / Seguridad</th>
+          <th>Último Acceso</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="fw-bold">
+            <code>{{ u.username }}</code>
+            {% if u.id == current_user.id %}
+            <span class="badge bg-primary ms-1" style="font-size: 0.65rem;">Tú</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="fw-semibold">{{ u.full_name }}</div>
+            {% if u.email %}<small class="text-muted">{{ u.email }}</small>{% endif %}
+          </td>
+          <td class="text-center">
+            {% if u.role == 'propietario' %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">Propietario</span>
+            {% elif u.role == 'administrador' %}
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle fw-semibold">Administrador</span>
+            {% else %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">Empleado</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if u.can_approve_credit_exception %}
+            <span class="badge bg-primary-subtle text-primary border"><i class="bi bi-check2-circle me-1"></i>Autorizado</span>
+            {% else %}
+            <span class="text-muted small">No</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if u.is_locked %}
+            <span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i>Bloqueado ({{ u.failed_login_attempts }} intentos)</span>
+            {% elif u.is_active %}
+            <span class="badge badge-status-ok">Activo</span>
+            {% else %}
+            <span class="badge badge-status-danger">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="small text-muted">
+            {{ u.last_login.strftime('%d/%m/%Y %H:%M') if u.last_login else 'Sin accesos registrados' }}
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              {% if u.is_locked or (u.failed_login_attempts and u.failed_login_attempts > 0) %}
+              <form method="POST" action="{{ url_for('settings.users') }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="unlock">
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <button type="submit" class="btn btn-danger" title="Desbloquear cuenta">
+                  <i class="bi bi-unlock-fill"></i>
+                </button>
+              </form>
+              {% endif %}
+              <button type="button" class="btn btn-outline-secondary" title="Editar Información y Permisos"
+                      onclick="openEditUserModal('{{ u.id }}', '{{ u.username }}', '{{ u.full_name|replace("'", "\\'") }}', '{{ u.email or '' }}', '{{ u.role }}', '{{ '1' if u.can_authorize_credit else '0' }}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-outline-primary" title="Restablecer Contraseña"
+                      onclick="openResetPasswordModal('{{ u.id }}', '{{ u.username }}')">
+                <i class="bi bi-key"></i>
+              </button>
+              {% if u.id != current_user.id %}
+              <form method="POST" action="{{ url_for('settings.users') }}" class="d-inline" onsubmit="return confirm('¿Cambiar estado para {{ u.username }}?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="toggle_status">
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <button type="submit" class="btn btn-outline-{{ 'warning' if u.is_active else 'success' }}" title="{{ 'Desactivar' if u.is_active else 'Activar' }}">
+                  <i class="bi bi-{{ 'pause-fill' if u.is_active else 'play-fill' }}"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Nuevo Usuario -->
+<div class="modal fade" id="newUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('settings.users') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="create">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill text-primary me-2"></i>Crear Nuevo Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nombre Completo *</label>
+            <input type="text" class="form-control" name="full_name" required placeholder="Ej: Dr. Roberto Gómez">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Usuario (login) *</label>
+              <input type="text" class="form-control" name="username" required placeholder="Ej: rgomez">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Rol en el Sistema *</label>
+              <select class="form-select" name="role" required>
+                <option value="empleado" selected>Empleado (Caja y Ventas)</option>
+                <option value="administrador">Administrador del Negocio</option>
+                <option value="propietario">Propietario (Acceso Total)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" name="email" placeholder="usuario@citypet.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Contraseña Inicial *</label>
+            <input type="password" class="form-control" name="password" required minlength="6" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="form-check p-2 bg-light rounded border">
+            <input class="form-check-input ms-1 me-2" type="checkbox" name="can_authorize_credit" id="newCanAuthCredit" value="1">
+            <label class="form-check-label small fw-semibold" for="newCanAuthCredit">
+              Puede autorizar excepciones de límite de crédito en ventas
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold">Crear Usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('settings.users') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="user_id" id="editUserId">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Editar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-muted">Usuario:</label>
+            <input type="text" class="form-control" id="editUsername" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nombre Completo *</label>
+            <input type="text" class="form-control" name="full_name" id="editFullName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" name="email" id="editEmail">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Rol en el Sistema *</label>
+            <select class="form-select" name="role" id="editRole" required>
+              <option value="empleado">Empleado (Caja y Ventas)</option>
+              <option value="administrador">Administrador del Negocio</option>
+              <option value="propietario">Propietario (Acceso Total)</option>
+            </select>
+          </div>
+          <div class="form-check p-2 bg-light rounded border">
+            <input class="form-check-input ms-1 me-2" type="checkbox" name="can_authorize_credit" id="editCanAuthCredit" value="1">
+            <label class="form-check-label small fw-semibold" for="editCanAuthCredit">
+              Puede autorizar excepciones de límite de crédito en ventas
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-bold">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Restablecer Contraseña -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('settings.users') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="reset_password">
+        <input type="hidden" name="user_id" id="resetUserId">
+        <div class="modal-header bg-warning-subtle">
+          <h5 class="modal-title fw-bold text-dark"><i class="bi bi-key-fill me-2"></i>Restablecer Contraseña</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-3">
+            Vas a restablecer la contraseña de acceso para el usuario <strong id="resetUsername" class="text-primary">-</strong>.
+          </p>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nueva Contraseña para el Usuario *</label>
+            <input type="password" class="form-control" name="new_password" required minlength="6" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tu Contraseña de Propietario (Confirmación) *</label>
+            <input type="password" class="form-control" name="admin_confirmation" required placeholder="Ingresa tu contraseña actual">
+            <div class="form-text">Requerido por seguridad para autorizar el cambio de credenciales.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-warning fw-bold text-dark">Confirmar Reseteo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditUserModal(id, username, fullName, email, role, canAuth) {
+  document.getElementById('editUserId').value = id;
+  document.getElementById('editUsername').value = username;
+  document.getElementById('editFullName').value = fullName;
+  document.getElementById('editEmail').value = email;
+  document.getElementById('editRole').value = role;
+  document.getElementById('editCanAuthCredit').checked = (canAuth === '1' || role === 'propietario');
+
+  new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+function openResetPasswordModal(id, username) {
+  document.getElementById('resetUserId').value = id;
+  document.getElementById('resetUsername').textContent = username;
+
+  new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Resumen Diario de Operaciones — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Resumen Diario de Operaciones</h1>
+    <p class="text-muted small mb-0">
+      Cierre y balance comercial ajustado a la zona horaria de Nicaragua (UTC-6 Managua)
+    </p>
+  </div>
+  <form method="GET" class="d-flex align-items-center gap-2">
+    <label class="small text-muted fw-bold text-nowrap">Fecha de Cierre:</label>
+    <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+    <button type="submit" class="btn btn-sm btn-citypet-primary"><i class="bi bi-search"></i></button>
+  </form>
+</div>
+
+<!-- Date Indicator Alert -->
+<div class="alert alert-info py-2 px-3 d-flex justify-content-between align-items-center mb-4">
+  <span><i class="bi bi-calendar2-day me-2"></i> Reporte correspondiente al <strong>{{ summary.date_formatted }}</strong></span>
+  <span class="badge bg-primary">Zona Horaria: UTC-6 (Managua)</span>
+</div>
+
+<!-- Primary Financial KPIs -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="citypet-card metric-card success p-3">
+      <div class="metric-label">Ventas Totales (Facturadas)</div>
+      <div class="metric-value text-success mt-1">{{ currency }} {{ "{:,.2f}".format(summary.total_sales_amount) }}</div>
+      <small class="text-muted">{{ summary.sales_count }} transacciones</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card info p-3">
+      <div class="metric-label">Cobranza y Abonos</div>
+      <div class="metric-value text-primary mt-1">{{ currency }} {{ "{:,.2f}".format(summary.total_abonos_collected) }}</div>
+      <small class="text-muted">{{ summary.abonos_count }} abonos recibidos</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Compras a Proveedores</div>
+      <div class="metric-value text-warning mt-1">{{ currency }} {{ "{:,.2f}".format(summary.total_purchases_amount) }}</div>
+      <small class="text-muted">{{ summary.purchases_count }} compras</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card {% if summary.net_cash_balance >= 0 %}success{% else %}danger{% endif %} p-3">
+      <div class="metric-label">Flujo Neto de Caja</div>
+      <div class="metric-value {% if summary.net_cash_balance >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+        {{ currency }} {{ "{:,.2f}".format(summary.net_cash_balance) }}
+      </div>
+      <small class="text-muted">Inflows − Outflows del día</small>
+    </div>
+  </div>
+</div>
+
+<!-- Secondary KPIs: Profitability & Inventory Units -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="citypet-card p-3">
+      <div class="text-muted small fw-semibold">UTILIDAD BRUTA COMERCIAL</div>
+      <div class="fs-4 fw-bold text-primary mt-1">{{ currency }} {{ "{:,.2f}".format(summary.gross_profit) }}</div>
+      <div class="small text-muted">Ventas − Costo (Margen: <strong class="text-dark">{{ summary.profit_margin }}%</strong>)</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card p-3">
+      <div class="text-muted small fw-semibold">UTILIDAD NETA OPERATIVA</div>
+      <div class="fs-4 fw-bold {% if summary.net_operating_profit >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+        {{ currency }} {{ "{:,.2f}".format(summary.net_operating_profit) }}
+      </div>
+      <div class="small text-muted">Bruta + Otros Ing. − Gastos</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card p-3">
+      <div class="text-muted small fw-semibold">GASTOS OPERATIVOS</div>
+      <div class="fs-4 fw-bold text-danger mt-1">{{ currency }} {{ "{:,.2f}".format(summary.expenses) }}</div>
+      <div class="small text-muted">Caja chica y servicios</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card p-3">
+      <div class="text-muted small fw-semibold">UNIDADES DESPACHADAS</div>
+      <div class="fs-4 fw-bold text-dark mt-1">{{ summary.units_sold }}</div>
+      <div class="small text-muted">Ingresadas hoy: <strong class="text-success">+{{ summary.units_received }}</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- Cash Flow Breakdown Card -->
+<div class="citypet-card p-4 mb-4">
+  <h5 class="fw-bold mb-3 border-bottom pb-2 text-primary">
+    <i class="bi bi-cash-coin me-1"></i> Desglose Detallado de Flujo de Caja (Efectivo y Bancos)
+  </h5>
+  <div class="row g-4">
+    <div class="col-md-6 border-end">
+      <h6 class="fw-bold text-success mb-3"><i class="bi bi-arrow-down-left-circle"></i> Entradas de Dinero (+{{ currency }} {{ "{:,.2f}".format(summary.total_cash_inflow) }})</h6>
+      <ul class="list-group list-group-flush small">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Ventas al Contado cobradas:
+          <strong class="text-success">{{ currency }} {{ "{:,.2f}".format(summary.cash_sales_collected) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Abonos iniciales de ventas a crédito:
+          <strong class="text-success">{{ currency }} {{ "{:,.2f}".format(summary.credit_initial_payments) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Abonos cobrados a facturas anteriores:
+          <strong class="text-success">{{ currency }} {{ "{:,.2f}".format(summary.total_abonos_collected) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Otros ingresos de caja:
+          <strong class="text-success">{{ currency }} {{ "{:,.2f}".format(summary.extra_income) }}</strong>
+        </li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h6 class="fw-bold text-danger mb-3"><i class="bi bi-arrow-up-right-circle"></i> Salidas de Dinero (−{{ currency }} {{ "{:,.2f}".format(summary.total_cash_outflow) }})</h6>
+      <ul class="list-group list-group-flush small">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Compras al contado pagadas hoy:
+          <strong class="text-danger">{{ currency }} {{ "{:,.2f}".format(summary.cash_purchases_amount) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Abonos iniciales en compras a crédito:
+          <strong class="text-danger">{{ currency }} {{ "{:,.2f}".format(summary.credit_purchases_initial_paid) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Pagos a proveedores (Cuentas por Pagar):
+          <strong class="text-danger">{{ currency }} {{ "{:,.2f}".format(summary.total_supplier_payments) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Gastos operativos adicionales del día:
+          <strong class="text-danger">{{ currency }} {{ "{:,.2f}".format(summary.expenses) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Reembolsos por devoluciones de clientes:
+          <strong class="text-danger">{{ currency }} {{ "{:,.2f}".format(summary.returns_refunded) }}</strong>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Transactions of the Day -->
+<div class="citypet-card p-3">
+  <h5 class="fw-bold mb-3 border-bottom pb-2">Ventas del Día ({{ summary.sales_list|length }})</h5>
+  <div class="table-responsive">
+    <table class="citypet-table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Hora</th>
+          <th>Cliente</th>
+          <th>Condición</th>
+          <th>Vendedor</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Cobrado Hoy</th>
+          <th class="text-end">Saldo</th>
+          <th class="text-center">Recibo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in summary.sales_list %}
+        <tr>
+          <td><span class="fw-bold text-primary">#{{ s.invoice_number }}</span></td>
+          <td>{{ s.created_at.strftime('%H:%M') }}</td>
+          <td>{{ s.client_name }}</td>
+          <td><span class="badge bg-light text-dark border">{{ s.payment_condition }}</span></td>
+          <td>{{ s.salesperson or 'Mostrador' }}</td>
+          <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format((s.total or 0.0)|float) }}</td>
+          <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format((s.paid_amount or 0.0)|float) }}</td>
+          <td class="text-end {% if s.balance_due > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format((s.balance_due or 0.0)|float) }}
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('receipts.view_receipt', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-primary" title="Ver Detalle Factura">
+                <i class="bi bi-eye"></i> Detalle
+              </a>
+              <a href="{{ url_for('receipts.print_receipt', id=(s.receipt_id or s.id)) }}" target="_blank" class="btn btn-outline-secondary" title="Imprimir">
+                <i class="bi bi-printer"></i>
+              </a>
+              <a href="{{ url_for('receipts.download_pdf', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-secondary" title="Descargar PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center py-4 text-muted">No se registraron ventas en esta fecha.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

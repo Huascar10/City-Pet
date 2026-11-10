@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Tendencias y Comparativas — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Tendencias Comerciales y Financieras</h1>
+    <p class="text-muted small mb-0">Evolución de ventas, compras a proveedores y gastos con comparativa histórica</p>
+  </div>
+  <div class="btn-group shadow-sm">
+    <a href="{{ url_for('reports.trends', period='7d') }}" class="btn btn-sm btn-outline-primary {% if period == '7d' %}active{% endif %}">7 Días</a>
+    <a href="{{ url_for('reports.trends', period='30d') }}" class="btn btn-sm btn-outline-primary {% if period == '30d' %}active{% endif %}">30 Días</a>
+    <a href="{{ url_for('reports.trends', period='3m') }}" class="btn btn-sm btn-outline-primary {% if period == '3m' %}active{% endif %}">3 Meses</a>
+  </div>
+</div>
+
+<!-- Comparison Metric Card -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="citypet-card metric-card success p-3">
+      <div class="metric-label">Ventas del Período</div>
+      <div class="metric-value text-success mt-1">{{ currency }} {{ "{:,.2f}".format(trend_data.total_sales) }}</div>
+      <div class="mt-1 small">
+        <span class="badge {% if trend_data.growth_vs_previous >= 0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+          {{ "{:+.1f}".format(trend_data.growth_vs_previous) }}%
+        </span>
+        <span class="text-muted ms-1">vs período anterior</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Compras a Proveedores</div>
+      <div class="metric-value text-warning mt-1">{{ currency }} {{ "{:,.2f}".format(trend_data.total_purchases) }}</div>
+      <small class="text-muted">Inversión en inventario</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card danger p-3">
+      <div class="metric-label">Gastos Operativos</div>
+      <div class="metric-value text-danger mt-1">{{ currency }} {{ "{:,.2f}".format(trend_data.total_expenses) }}</div>
+      <small class="text-muted">Servicios y caja chica</small>
+    </div>
+  </div>
+</div>
+
+<!-- Time Series Chart Card -->
+<div class="citypet-card p-4 mb-4">
+  <h5 class="fw-bold mb-3 text-primary">
+    <i class="bi bi-graph-up-arrow me-1"></i> Evolución Cronológica (Ventas vs Compras vs Gastos)
+  </h5>
+  <div style="height: 340px;">
+    <canvas id="trendChart"></canvas>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const labels = {{ trend_data.labels|tojson }};
+  const sales = {{ trend_data.sales|tojson }};
+  const purchases = {{ trend_data.purchases|tojson }};
+  const expenses = {{ trend_data.expenses|tojson }};
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Ventas ({{ currency }})',
+          data: sales,
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2
+        },
+        {
+          label: 'Compras ({{ currency }})',
+          data: purchases,
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.05)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2
+        },
+        {
+          label: 'Gastos ({{ currency }})',
+          data: expenses,
+          borderColor: '#EF4444',
+          borderDash: [5, 5],
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': {{ currency }} ' + context.parsed.y.toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) { return '{{ currency }} ' + value; }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

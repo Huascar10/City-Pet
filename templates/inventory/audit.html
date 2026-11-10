@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Auditoría y Conteo Físico{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Auditoría y Conteo Físico de Inventario</h1>
+    <p class="text-muted small mb-0">Comparativa entre conteo físico en bodega y existencias calculadas en el sistema</p>
+  </div>
+  <a href="{{ url_for('inventory.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Volver al Inventario
+  </a>
+</div>
+
+<div class="card citypet-card border-0 mb-4 p-3 bg-light">
+  <div class="d-flex align-items-center gap-3">
+    <i class="bi bi-info-circle-fill text-primary fs-3"></i>
+    <div class="small">
+      <strong>Instrucciones de Auditoría:</strong> Al ingresar un nuevo valor en el conteo físico, puede seleccionar la casilla <em>"Ajustar sistema automáticamente"</em> si desea que el sistema genere automáticamente el movimiento de entrada o salida de inventario para cuadrar la existencia con la realidad de bodega.
+    </div>
+  </div>
+</div>
+
+<div class="card citypet-card border-0">
+  <div class="table-responsive">
+    <table class="table citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th>Almacén</th>
+          <th class="text-center">Existencia Sistema</th>
+          <th class="text-center">Conteo Físico</th>
+          <th class="text-center">Diferencia</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Actualizar Conteo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><code>{{ p.code }}</code></td>
+          <td class="fw-bold">{{ p.name }}</td>
+          <td>{{ p.warehouse }}</td>
+          <td class="text-center fw-semibold fs-6 text-primary">{{ p.current_stock|int }}</td>
+          <td class="text-center fw-bold fs-6 text-dark">{{ p.physical_stock|int }}</td>
+          <td class="text-center fw-bold">
+            {% if p.difference > 0 %}
+            <span class="text-success">+{{ p.difference|int }} (Sobrante)</span>
+            {% elif p.difference < 0 %}
+            <span class="text-danger">{{ p.difference|int }} (Faltante)</span>
+            {% else %}
+            <span class="text-muted">0 (Exacto)</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if p.status == 'Agotada' %}
+            <span class="badge badge-status-danger">Agotada</span>
+            {% elif p.status == 'Menor al Minimo' %}
+            <span class="badge badge-status-warning">Menor al Mínimo</span>
+            {% else %}
+            <span class="badge badge-status-ok">Ok</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-primary"
+              onclick="openAuditModal('{{ p.id }}', '{{ p.code }}', '{{ p.name|escape }}', '{{ p.current_stock|int }}', '{{ p.physical_stock|int }}')">
+              <i class="bi bi-pencil-square"></i> Actualizar
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Conteo Físico -->
+<div class="modal fade" id="auditModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('inventory.audit') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="product_id" id="audit_product_id">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-clipboard-check text-primary me-2"></i>Actualizar Conteo Físico</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <div class="small text-muted">Producto:</div>
+            <div class="fw-bold fs-6" id="audit_prod_name"></div>
+            <code id="audit_prod_code"></code>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Existencia Sistema:</label>
+              <input type="text" class="form-control bg-light" id="audit_current_stock" disabled>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Nuevo Conteo Físico:</label>
+              <input type="number" step="1" min="0" name="physical_stock" id="audit_physical_stock" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-check p-3 bg-light rounded border">
+            <input class="form-check-input ms-0 me-2" type="checkbox" name="auto_adjust" id="auto_adjust" value="1" checked>
+            <label class="form-check-label small fw-semibold" for="auto_adjust">
+              Ajustar stock del sistema automáticamente
+              <span class="d-block text-muted fw-normal" style="font-size: 0.78rem;">Genera un movimiento de ajuste auditado para igualar el sistema al conteo físico.</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-citypet-primary px-4">Guardar Conteo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openAuditModal(id, code, name, currentStock, physicalStock) {
+  document.getElementById('audit_product_id').value = id;
+  document.getElementById('audit_prod_code').textContent = code;
+  document.getElementById('audit_prod_name').textContent = name;
+  document.getElementById('audit_current_stock').value = currentStock;
+  document.getElementById('audit_physical_stock').value = physicalStock;
+  new bootstrap.Modal(document.getElementById('auditModal')).show();
+}
+</script>
+{% endblock %}

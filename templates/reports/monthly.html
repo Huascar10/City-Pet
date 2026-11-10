@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Resumen Mensual y Comparativas — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Resumen Mensual y Comparativas</h1>
+    <p class="text-muted small mb-0">Rendimiento comercial consolidado, análisis de margen y comparativa mes a mes (MoM)</p>
+  </div>
+  <form method="GET" class="d-flex align-items-center gap-2">
+    <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for m_idx in range(1, 13) %}
+      <option value="{{ m_idx }}" {% if selected_month == m_idx %}selected{% endif %}>
+        {% set months_names = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] %}
+        {{ months_names[m_idx - 1] }}
+      </option>
+      {% endfor %}
+    </select>
+    <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+      {% for y in years_available %}
+      <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-sm btn-citypet-primary"><i class="bi bi-arrow-repeat"></i></button>
+  </form>
+</div>
+
+<!-- Header Period Badge -->
+<div class="alert alert-primary py-2 px-3 d-flex justify-content-between align-items-center mb-4">
+  <span><i class="bi bi-calendar3 me-2"></i> Período: <strong>{{ summary.month_name }} {{ summary.year }}</strong> ({{ summary.start_date }} al {{ summary.end_date }})</span>
+  <div>
+    <span class="badge bg-light text-dark border">
+      Variación Ventas MoM: 
+      <strong class="{% if summary.sales_growth_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ "{:+.1f}".format(summary.sales_growth_pct) }}%
+      </strong>
+    </span>
+  </div>
+</div>
+
+<!-- Key Monthly Metrics -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="citypet-card metric-card success p-3">
+      <div class="metric-label">Ventas Totales del Mes</div>
+      <div class="metric-value text-success mt-1">{{ currency }} {{ "{:,.2f}".format(summary.total_sales) }}</div>
+      <div class="d-flex justify-content-between align-items-center mt-1">
+        <small class="text-muted">{{ summary.sales_count }} transacciones</small>
+        <span class="badge {% if summary.sales_growth_pct >= 0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+          {{ "{:+.1f}".format(summary.sales_growth_pct) }}% MoM
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card info p-3">
+      <div class="metric-label">Utilidad Bruta Comercial</div>
+      <div class="metric-value text-primary mt-1">{{ currency }} {{ "{:,.2f}".format(summary.gross_profit) }}</div>
+      <div class="d-flex justify-content-between align-items-center mt-1">
+        <small class="text-muted">Margen: <strong>{{ summary.profit_margin_pct }}%</strong></small>
+        <span class="badge {% if summary.profit_growth_pct >= 0 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+          {{ "{:+.1f}".format(summary.profit_growth_pct) }}% MoM
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card {% if summary.net_operating_profit >= 0 %}success{% else %}danger{% endif %} p-3">
+      <div class="metric-label">Utilidad Neta Operativa</div>
+      <div class="metric-value {% if summary.net_operating_profit >= 0 %}text-success{% else %}text-danger{% endif %} mt-1">
+        {{ currency }} {{ "{:,.2f}".format(summary.net_operating_profit) }}
+      </div>
+      <small class="text-muted">Bruta + Otros Ing. − Gastos Op.</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Compras Acumuladas</div>
+      <div class="metric-value text-warning mt-1">{{ currency }} {{ "{:,.2f}".format(summary.total_purchases) }}</div>
+      <small class="text-muted">Inversión en mercancía del mes</small>
+    </div>
+  </div>
+</div>
+
+<!-- Top & Least Selling Products Grid -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="citypet-card p-3 h-100">
+      <h5 class="fw-bold mb-3 border-bottom pb-2 text-success">
+        <i class="bi bi-trophy-fill me-1 text-warning"></i> Top 5 Productos Más Vendidos del Mes
+      </h5>
+      <div class="table-responsive">
+        <table class="citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Unidades</th>
+              <th class="text-end">Ingresos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in summary.top_selling %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ item.name }}</div>
+                <code>{{ item.code }}</code>
+              </td>
+              <td class="text-center fw-bold">{{ item.units }}</td>
+              <td class="text-end fw-bold text-success">{{ currency }} {{ "{:,.2f}".format(item.revenue) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center py-3 text-muted">Sin datos de ventas en este mes.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="citypet-card p-3 h-100">
+      <h5 class="fw-bold mb-3 border-bottom pb-2 text-danger">
+        <i class="bi bi-arrow-down-circle-fill me-1 text-danger"></i> Productos Menos Vendidos (Alerta de Rotación)
+      </h5>
+      <div class="table-responsive">
+        <table class="citypet-table align-middle">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Unidades</th>
+              <th class="text-end">Ingresos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in summary.least_selling %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ item.name }}</div>
+                <code>{{ item.code }}</code>
+              </td>
+              <td class="text-center fw-bold text-muted">{{ item.units }}</td>
+              <td class="text-end text-muted">{{ currency }} {{ "{:,.2f}".format(item.revenue) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center py-3 text-muted">Sin datos de rotación baja disponibles.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Monthly Invoices & Sales Table -->
+<div class="citypet-card p-3 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h5 class="fw-bold mb-0 text-primary">
+        <i class="bi bi-receipt-cutoff me-2"></i>Facturas y Ventas del Mes
+      </h5>
+      <p class="text-muted small mb-0">Detalle individual de facturación emitida durante {{ summary.month_name }} {{ summary.year }}</p>
+    </div>
+    <span class="badge bg-light text-dark border px-3 py-2">
+      <strong>{{ summary.sales_count }}</strong> factura(s) registrada(s)
+    </span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="citypet-table align-middle">
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Condición</th>
+          <th>Vendedor</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Cobrado</th>
+          <th class="text-end">Saldo</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in summary.sales_list %}
+        <tr>
+          <td><span class="fw-bold text-primary">#{{ s.invoice_number }}</span></td>
+          <td>{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '' }}</td>
+          <td>
+            <div class="fw-semibold text-truncate" style="max-width: 220px;">{{ s.client_name }}</div>
+            {% if s.client_code %}<small class="text-muted"><code>{{ s.client_code }}</code></small>{% endif %}
+          </td>
+          <td>
+            <span class="badge {% if s.is_credit %}bg-warning-subtle text-warning-emphasis border border-warning{% else %}bg-success-subtle text-success border border-success{% endif %}">
+              {{ s.payment_condition or 'Contado' }}
+            </span>
+          </td>
+          <td class="small">{{ s.salesperson or 'Mostrador' }}</td>
+          <td class="text-end fw-bold">{{ currency }} {{ "{:,.2f}".format((s.total or 0.0)|float) }}</td>
+          <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format((s.paid_amount or 0.0)|float) }}</td>
+          <td class="text-end {% if s.balance_due > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+            {{ currency }} {{ "{:,.2f}".format((s.balance_due or 0.0)|float) }}
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('receipts.view_receipt', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-primary" title="Ver Detalle Factura">
+                <i class="bi bi-eye"></i> Detalle
+              </a>
+              <a href="{{ url_for('receipts.print_receipt', id=(s.receipt_id or s.id)) }}" target="_blank" class="btn btn-outline-secondary" title="Imprimir">
+                <i class="bi bi-printer"></i>
+              </a>
+              <a href="{{ url_for('receipts.download_pdf', id=(s.receipt_id or s.id)) }}" class="btn btn-outline-secondary" title="Descargar PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-3 d-block mb-1 text-secondary"></i>
+            No se registraron ventas en este mes.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

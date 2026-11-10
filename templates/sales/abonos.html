@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Cuentas por Cobrar y Abonos — CityPet{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Cuentas por Cobrar y Abonos de Clientes</h1>
+    <p class="text-muted small mb-0">Gestión de cartera, cobranza de créditos, estados de liquidación y emisión de recibos oficiales</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="CityPetInteractiveTour.showWindowGuide()">
+      <i class="bi bi-mortarboard-fill me-1"></i> Tutorial de esta ventana
+    </button>
+    <a href="{{ url_for('sales.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver a Ventas
+    </a>
+  </div>
+</div>
+
+<!-- Summary Metrics -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="citypet-card metric-card danger p-3">
+      <div class="metric-label">Total Saldo Pendiente (Por Cobrar)</div>
+      <div class="metric-value text-danger mt-1">{{ currency }} {{ "{:,.2f}".format(total_receivable) }}</div>
+      <small class="text-muted">Créditos comerciales activos</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card warning p-3">
+      <div class="metric-label">Facturas con Saldo Pendiente</div>
+      <div class="metric-value text-warning mt-1">{{ credit_sales|selectattr('balance_due', 'gt', 0.009)|list|length }}</div>
+      <small class="text-muted">Facturas de crédito abiertas</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="citypet-card metric-card success p-3">
+      <div class="metric-label">Abonos Registrados</div>
+      <div class="metric-value text-success mt-1">{{ recent_payments|length }}</div>
+      <small class="text-muted">Transacciones de cobro aplicadas</small>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs: Pending Invoices vs Payment History -->
+<ul class="nav nav-tabs mb-3" id="abonoTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-semibold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-pane" type="button" role="tab">
+      <i class="bi bi-clock-history me-1"></i> Facturas a Crédito y Estados
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-semibold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+      <i class="bi bi-receipt me-1"></i> Historial de Abonos Recientes
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="abonoTabsContent">
+  <!-- Tab 1: Credit Invoices -->
+  <div class="tab-pane fade show active" id="pending-pane" role="tabpanel">
+    <div class="citypet-card">
+      <div class="table-responsive">
+        <table class="citypet-table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Factura</th>
+              <th>Emisión / Vence</th>
+              <th>Cliente</th>
+              <th>Condición</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Abonado</th>
+              <th class="text-end">Saldo Pendiente</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in credit_sales %}
+            <tr>
+              <td>
+                <span class="fw-bold text-primary">#{{ s.invoice_number }}</span>
+              </td>
+              <td>
+                <small class="text-muted d-block">{{ s.created_at.strftime('%d/%m/%Y') }}</small>
+                {% if s.due_date %}
+                <small class="{% if s.is_overdue %}text-danger fw-bold{% else %}text-secondary{% endif %}">
+                  Vence: {{ s.due_date.strftime('%d/%m/%Y') }}
+                </small>
+                {% endif %}
+              </td>
+              <td>
+                {% if s.client_id %}
+                <a href="{{ url_for('clients.history', id=s.client_id) }}" class="fw-semibold text-decoration-none">{{ s.client_name }}</a>
+                {% else %}
+                <div class="fw-semibold">{{ s.client_name }}</div>
+                {% endif %}
+                {% if s.client_ruc %}<small class="text-muted d-block">RUC: {{ s.client_ruc }}</small>{% endif %}
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ s.payment_condition }}</span></td>
+              <td class="text-end fw-semibold">{{ currency }} {{ "{:,.2f}".format(s.total) }}</td>
+              <td class="text-end text-success">{{ currency }} {{ "{:,.2f}".format(s.paid_amount) }}</td>
+              <td class="text-end fw-bold {% if s.balance_due > 0.009 %}text-danger{% else %}text-success{% endif %}">
+                {{ currency }} {{ "{:,.2f}".format(s.balance_due) }}
+              </td>
+              <td class="text-center">
+                {% if s.payment_status == 'Liquidado' %}
+                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Liquidado</span>
+                {% elif s.is_overdue %}
+                <span class="badge bg-danger"><i class="bi bi-exclamation-circle me-1"></i>Vencida</span>
+                {% elif s.payment_status == 'Abonado' %}
+                <span class="badge bg-warning text-dark">Abonado</span>
+                {% else %}
+                <span class="badge bg-secondary">Pendiente</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if s.balance_due > 0.009 %}
+                <button type="button" class="btn btn-sm btn-citypet-primary" 
+                        onclick="openAbonoModal('{{ s.id }}', '{{ s.invoice_number }}', '{{ s.client_name|escape }}', '{{ s.balance_due }}')">
+                  <i class="bi bi-plus-circle"></i> Registrar Abono
+                </button>
+                {% else %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Deuda Saldada</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">
+                <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
+                No hay facturas a crédito registradas.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Recent Abonos -->
+  <div class="tab-pane fade" id="history-pane" role="tabpanel">
+    <div class="citypet-card">
+      <div class="table-responsive">
+        <table class="citypet-table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>No. Recibo Abono</th>
+              <th>Fecha</th>
+              <th>Factura</th>
+              <th>Cliente</th>
+              <th class="text-end">Monto Abonado</th>
+              <th class="text-end">Saldo Anterior</th>
+              <th class="text-end">Nuevo Saldo</th>
+              <th>Método</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td><span class="fw-bold text-dark">{{ p.payment_number }}</span></td>
+              <td><small class="text-muted">{{ p.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
+              <td>
+                {% if p.sale %}
+                <span class="text-primary fw-semibold">#{{ p.sale.invoice_number }}</span>
+                {% else %}-{% endif %}
+              </td>
+              <td>{{ p.client.name if p.client else (p.sale.client_name if p.sale else '-') }}</td>
+              <td class="text-end fw-bold text-success">{{ currency }} {{ "{:,.2f}".format(p.amount) }}</td>
+              <td class="text-end text-muted">{{ currency }} {{ "{:,.2f}".format(p.previous_balance) }}</td>
+              <td class="text-end fw-semibold {% if p.new_balance <= 0.009 %}text-success{% else %}text-danger{% endif %}">
+                {{ currency }} {{ "{:,.2f}".format(p.new_balance) }}
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ p.payment_method }}</span></td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm">
+                  {% if p.receipt_id %}
+                  <a href="{{ url_for('receipts.view_receipt', id=p.receipt_id) }}" class="btn btn-outline-primary" title="Ver Recibo Oficial">
+                    <i class="bi bi-receipt"></i> Recibo
+                  </a>
+                  <a href="{{ url_for('receipts.download_pdf', id=p.receipt_id) }}" class="btn btn-outline-secondary" title="Descargar PDF">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">
+                No hay registros de abonos recientes.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar Abono -->
+<div class="modal fade" id="abonoModal" tabindex="-1" aria-labelledby="abonoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="abonoForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="idempotency_token" id="abonoIdempotency">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="abonoModalLabel">Registrar Abono a Factura</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="bg-light p-3 rounded mb-3 border">
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Factura:</span>
+              <strong id="modalInvoiceNum" class="text-primary">-</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">Cliente:</span>
+              <strong id="modalClientName">-</strong>
+            </div>
+            <div class="d-flex justify-content-between mt-1 pt-1 border-top">
+              <span class="text-muted">Saldo Pendiente:</span>
+              <strong id="modalBalanceDue" class="text-danger fs-6">-</strong>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Monto del Abono ({{ currency }}) *</label>
+            <input type="number" step="0.01" class="form-control form-control-lg fw-bold" name="amount" id="abonoAmount" required min="0.01">
+            <div class="form-text">El monto no puede exceder el saldo pendiente de la factura. Si abona el total, la factura pasará a estado <strong>Liquidado</strong>.</div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Método de Pago *</label>
+              <select class="form-select" name="payment_method" id="abonoMethod" required>
+                <option value="Efectivo" selected>Efectivo</option>
+                <option value="Transferencia">Transferencia Bancaria</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Tarjeta">Tarjeta</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">No. Referencia</label>
+              <input type="text" class="form-control" name="reference" placeholder="Opcional (Cheque/Transf)">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Notas u Observaciones</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Detalles adicionales del pago"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between">
+          <button type="button" class="btn btn-outline-info" onclick="previewAbono()">
+            <i class="bi bi-eye"></i> Vista Previa
+          </button>
+          <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success fw-bold">
+              <i class="bi bi-check-lg"></i> Confirmar Abono
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Vista Previa de Abono con Marca de Agua -->
+<div class="modal fade" id="abonoPreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content preview-watermark-container">
+      <div class="preview-watermark">VISTA PREVIA — NO VÁLIDO</div>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold text-primary"><i class="bi bi-receipt"></i> Simulación de Recibo de Abono</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="abonoPreviewBody">
+        <!-- Live preview will be injected here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Volver a editar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let activeSaleId = null;
+let activeBalanceDue = 0;
+
+function openAbonoModal(saleId, invoiceNum, clientName, balanceDue) {
+  activeSaleId = saleId;
+  activeBalanceDue = parseFloat(balanceDue);
+  
+  document.getElementById('modalInvoiceNum').textContent = '#' + invoiceNum;
+  document.getElementById('modalClientName').textContent = clientName;
+  document.getElementById('modalBalanceDue').textContent = '{{ currency }} ' + activeBalanceDue.toFixed(2);
+  
+  const amountInput = document.getElementById('abonoAmount');
+  amountInput.value = activeBalanceDue.toFixed(2);
+  amountInput.max = activeBalanceDue.toFixed(2);
+  
+  document.getElementById('abonoForm').action = '/sales/' + saleId + '/abono';
+  document.getElementById('abonoIdempotency').value = 'ABN-' + crypto.randomUUID();
+  
+  new bootstrap.Modal(document.getElementById('abonoModal')).show();
+}
+
+function previewAbono() {
+  const amount = parseFloat(document.getElementById('abonoAmount').value || 0);
+  if (amount <= 0 || amount > activeBalanceDue + 0.01) {
+    alert("Por favor ingrese un monto válido menor o igual al saldo pendiente.");
+    return;
+  }
+  const method = document.getElementById('abonoMethod').value;
+  const newBal = Math.max(0, activeBalanceDue - amount);
+
+  const previewHtml = `
+    <div class="text-center mb-3">
+      <h6 class="fw-bold mb-0">CITYPET PHARMA</h6>
+      <small class="text-muted">RUC: {{ company_ruc }}</small>
+    </div>
+    <div class="border-top border-bottom py-2 my-2 small">
+      <div class="d-flex justify-content-between"><span>Factura Afectada:</span><strong>` + document.getElementById('modalInvoiceNum').textContent + `</strong></div>
+      <div class="d-flex justify-content-between"><span>Cliente:</span><strong>` + document.getElementById('modalClientName').textContent + `</strong></div>
+      <div class="d-flex justify-content-between"><span>Método:</span><strong>` + method + `</strong></div>
+    </div>
+    <div class="bg-light p-3 rounded my-3 border">
+      <div class="d-flex justify-content-between mb-1"><span>Saldo Anterior:</span><span>{{ currency }} ` + activeBalanceDue.toFixed(2) + `</span></div>
+      <div class="d-flex justify-content-between mb-1 text-success fw-bold"><span>Monto Abonado:</span><span>{{ currency }} ` + amount.toFixed(2) + `</span></div>
+      <div class="d-flex justify-content-between border-top pt-1 text-danger fw-bold fs-6"><span>Nuevo Saldo:</span><span>{{ currency }} ` + newBal.toFixed(2) + `</span></div>
+    </div>
+    <p class="text-center text-muted small mb-0"><i class="bi bi-info-circle"></i> Este documento es solo una simulación antes de registrar el cobro.</p>
+  `;
+
+  document.getElementById('abonoPreviewBody').innerHTML = previewHtml;
+  new bootstrap.Modal(document.getElementById('abonoPreviewModal')).show();
+}
+</script>
+{% endblock %}
