@@ -1,0 +1,454 @@
+================================================================================
+                       CONTROL DE RESPALDO - CITYPET
+================================================================================
+
+PROYECTO:                 CityPet Pharma (CITYPET)
+FECHA Y HORA DE CREACIÓN: 2026-11-12 08:12:34 (Duración: 4.01 s)
+UBICACIÓN ORIGINAL:       C:\Users\huasc\Documents\CITYPET
+UBICACIÓN DEL RESPALDO:   C:\Users\huasc\Documents\CityPet_BACKUP
+TOTAL ARCHIVOS COPIADOS:  281
+TOTAL DIRECTORIOS:        147
+TAMAÑO TOTAL:             13.74 MB (14,407,288 bytes)
+
+--------------------------------------------------------------------------------
+1. ESTADO DEL PROYECTO (CONTROL DE VERSIONES)
+--------------------------------------------------------------------------------
+Commit: 8f238fbee7664866789520298911c56df8a53d0d
+Rama: main
+Estado de trabajo:
+M templates/dashboard/index.html
+
+--------------------------------------------------------------------------------
+2. COMPROBACIÓN DE INTEGRIDAD DE BASES DE DATOS SQLITE
+--------------------------------------------------------------------------------
+Base de datos: citypet.db
+  Estado general:           OK
+  PRAGMA integrity_check:   [('ok',)]
+  PRAGMA foreign_key_check: []
+  Tamaño en bytes:          1,273,856 bytes
+  Tablas encontradas:       17
+  Conteo de filas coincide: True
+  Detalle de filas por tabla:
+    - audit_logs               : 33 filas
+    - clients                  : 341 filas
+    - credit_exceptions        : 0 filas
+    - financial_movements      : 8 filas
+    - inventory_movements      : 2,699 filas
+    - login_attempts           : 3 filas
+    - payments                 : 0 filas
+    - products                 : 38 filas
+    - purchase_items           : 1 filas
+    - purchase_payments        : 0 filas
+    - purchases                : 1 filas
+    - receipts                 : 8 filas
+    - sale_items               : 8 filas
+    - sales                    : 7 filas
+    - suppliers                : 2 filas
+    - system_settings          : 4 filas
+    - users                    : 2 filas
+
+Base de datos: backups\citypet_pre_transformation_20261109_142110.db
+  Estado general:           OK
+  PRAGMA integrity_check:   [('ok',)]
+  PRAGMA foreign_key_check: []
+  Tamaño en bytes:          1,040,384 bytes
+  Tablas encontradas:       14
+  Conteo de filas coincide: True
+  Detalle de filas por tabla:
+    - audit_logs               : 26 filas
+    - clients                  : 331 filas
+    - financial_movements      : 5 filas
+    - inventory_movements      : 2,696 filas
+    - payments                 : 0 filas
+    - products                 : 38 filas
+    - purchase_items           : 0 filas
+    - purchases                : 0 filas
+    - receipts                 : 5 filas
+    - sale_items               : 6 filas
+    - sales                    : 5 filas
+    - suppliers                : 1 filas
+    - system_settings          : 4 filas
+    - users                    : 2 filas
+
+Base de datos: backups\citypet_pre_transformation_backup.db
+  Estado general:           OK
+  PRAGMA integrity_check:   [('ok',)]
+  PRAGMA foreign_key_check: []
+  Tamaño en bytes:          1,040,384 bytes
+  Tablas encontradas:       14
+  Conteo de filas coincide: True
+  Detalle de filas por tabla:
+    - audit_logs               : 26 filas
+    - clients                  : 331 filas
+    - financial_movements      : 5 filas
+    - inventory_movements      : 2,696 filas
+    - payments                 : 0 filas
+    - products                 : 38 filas
+    - purchase_items           : 0 filas
+    - purchases                : 0 filas
+    - receipts                 : 5 filas
+    - sale_items               : 6 filas
+    - sales                    : 5 filas
+    - suppliers                : 1 filas
+    - system_settings          : 4 filas
+    - users                    : 2 filas
+
+--------------------------------------------------------------------------------
+3. RESULTADO DE COMPROBACIÓN DE HASHES SHA-256
+--------------------------------------------------------------------------------
+Archivos evaluados:   281
+Archivos coincidentes: 281
+Discrepancias:        0
+ESTADO SHA-256:       100% ÍNTEGRO Y VERIFICADO (Todos los hashes coinciden de forma exacta)
+
+--------------------------------------------------------------------------------
+4. ELEMENTOS EXCLUIDOS (REGENERABLES Y CACHÉ)
+--------------------------------------------------------------------------------
+Total carpetas excluidas: 8
+Total archivos excluidos: 40
+Carpetas:
+  [DIR] .pytest_cache
+  [DIR] .pytest_cache\v
+  [DIR] .pytest_cache\v\cache
+  [DIR] __pycache__
+  [DIR] models\__pycache__
+  [DIR] routes\__pycache__
+  [DIR] services\__pycache__
+  [DIR] tests\__pycache__
+Archivos:
+  [FILE] .pytest_cache\.gitignore                                     (37 bytes) - Dentro de directorio cache/excluido
+  [FILE] .pytest_cache\CACHEDIR.TAG                                   (191 bytes) - Dentro de directorio cache/excluido
+  [FILE] .pytest_cache\README.md                                      (302 bytes) - Dentro de directorio cache/excluido
+  [FILE] .pytest_cache\v\cache\lastfailed                             (159 bytes) - Dentro de directorio cache/excluido
+  [FILE] .pytest_cache\v\cache\nodeids                                (5,248 bytes) - Dentro de directorio cache/excluido
+  [FILE] __pycache__\app.cpython-314.pyc                              (15,199 bytes) - Dentro de directorio cache/excluido
+  [FILE] __pycache__\config.cpython-314.pyc                           (19,060 bytes) - Dentro de directorio cache/excluido
+  [FILE] __pycache__\extensions.cpython-314.pyc                       (659 bytes) - Dentro de directorio cache/excluido
+  [FILE] models\__pycache__\__init__.cpython-314.pyc                  (72,583 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\auth.cpython-314.pyc                      (11,062 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\clients.cpython-314.pyc                   (18,279 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\dashboard.cpython-314.pyc                 (1,021 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\finances.cpython-314.pyc                  (24,490 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\imports.cpython-314.pyc                   (15,480 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\inventory.cpython-314.pyc                 (17,815 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\products.cpython-314.pyc                  (16,507 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\purchases.cpython-314.pyc                 (17,527 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\receipts.cpython-314.pyc                  (14,773 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\reports.cpython-314.pyc                   (15,530 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\sales.cpython-314.pyc                     (20,035 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\settings.cpython-314.pyc                  (34,463 bytes) - Dentro de directorio cache/excluido
+  [FILE] routes\__pycache__\suppliers.cpython-314.pyc                 (11,700 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\backup_service.cpython-314.pyc          (59,991 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\crypto_service.cpython-314.pyc          (6,872 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\excel_service.cpython-314.pyc           (33,919 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\inventory_service.cpython-314.pyc       (8,264 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\migration_service.cpython-314.pyc       (10,789 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\payment_service.cpython-314.pyc         (23,429 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\purchase_service.cpython-314.pyc        (21,964 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\receipt_service.cpython-314.pyc         (14,202 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\reconciliation_service.cpython-314.pyc  (9,243 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\report_service.cpython-314.pyc          (19,030 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\returns_service.cpython-314.pyc         (9,977 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\sales_service.cpython-314.pyc           (34,051 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\storage_service.cpython-314.pyc         (19,876 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\summary_service.cpython-314.pyc         (29,547 bytes) - Dentro de directorio cache/excluido
+  [FILE] services\__pycache__\telegram_service.cpython-314.pyc        (15,786 bytes) - Dentro de directorio cache/excluido
+  [FILE] tests\__pycache__\test_acceptance_43.cpython-314-pytest-9.2.0.pyc (153,271 bytes) - Dentro de directorio cache/excluido
+  [FILE] tests\__pycache__\test_citypet.cpython-314-pytest-9.2.0.pyc  (103,360 bytes) - Dentro de directorio cache/excluido
+  [FILE] tests\__pycache__\test_deployment_readiness.cpython-314-pytest-9.2.0.pyc (43,054 bytes) - Dentro de directorio cache/excluido
+
+--------------------------------------------------------------------------------
+5. OBSERVACIONES Y NOTAS DE SEGURIDAD
+--------------------------------------------------------------------------------
+- La aplicación Flask se encontraba activa durante la copia; la base de datos sqlite
+  se copió con consistencia completa y se validó en modo de sólo lectura.
+- Se preservaron carpetas estructurales vacías como instance/, utils/ y static/uploads/logos/.
+- Se incluyeron documentos contables e inventarios (City Pet Pharma _ Factura.pdf, INVENTARIO NUEVO.xlsx).
+- Se respaldaron todos los backups previos de JSON y DB ubicados en backups/.
+- No se modificó ningún archivo en el directorio original CITYPET.
+- La copia permanece 100% privada y local en esta máquina.
+
+--------------------------------------------------------------------------------
+6. REGISTRO COMPLETO DE ARCHIVOS RESPALDADOS Y SUS HASHES SHA-256
+--------------------------------------------------------------------------------
+71fd76fde3f1a25e838ffea7d129b50de99b9004c7701d996a70b51184d6f6ba  [     3,852 bytes]  .env.example
+3f8c100b5153d0b6843b843f65c26a94b88ef5e76c5b96d66ec6992242f27e89  [        91 bytes]  .git\COMMIT_EDITMSG
+28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80  [        21 bytes]  .git\HEAD
+05becdb83bb897f6103c8d91439e2e9092144edf5b3955a746fce4975c12bfdc  [       130 bytes]  .git\config
+85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee  [        73 bytes]  .git\description
+0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7  [       478 bytes]  .git\hooks\applypatch-msg.sample
+efc1401b0e99d1ff51494d154d98b46c1e99059bcd8bf9f73cecde19fd3eb23b  [     1,972 bytes]  .git\hooks\commit-msg.sample
+9159720099ad5595b8e66645cbfd47763c1e920f46e0b50ae75e642bbec57ef0  [     4,611 bytes]  .git\hooks\fsmonitor-watchman.sample
+81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5  [       189 bytes]  .git\hooks\post-update.sample
+e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475  [       424 bytes]  .git\hooks\pre-applypatch.sample
+57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b  [     1,649 bytes]  .git\hooks\pre-commit.sample
+d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53  [       416 bytes]  .git\hooks\pre-merge-commit.sample
+ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a  [     1,374 bytes]  .git\hooks\pre-push.sample
+4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3  [     4,898 bytes]  .git\hooks\pre-rebase.sample
+a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989  [       544 bytes]  .git\hooks\pre-receive.sample
+e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619  [     1,492 bytes]  .git\hooks\prepare-commit-msg.sample
+a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f  [     2,783 bytes]  .git\hooks\push-to-checkout.sample
+44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92  [     2,308 bytes]  .git\hooks\sendemail-validate.sample
+8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106  [     3,650 bytes]  .git\hooks\update.sample
+3f759a6dccab263f06c751854e74cccd2eeae7f1d26ae636cfe8a7e40e29ad12  [    10,371 bytes]  .git\index
+6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1  [       240 bytes]  .git\info\exclude
+1a52b115c5f49c55e0bf4d1907f6dabddafa58d524d7607abd630e942ee2a1f4  [       234 bytes]  .git\logs\HEAD
+1a52b115c5f49c55e0bf4d1907f6dabddafa58d524d7607abd630e942ee2a1f4  [       234 bytes]  .git\logs\refs\heads\main
+049d137a0fda5aace7241af0b7bbe1fa1ecbcedfddac741ee60aa4b9ef01861b  [       156 bytes]  .git\logs\refs\heads\staging
+2a792f7379bb280ad64f384a80f621d151fee49a0e4048430f83e921ba6986ee  [     2,872 bytes]  .git\objects\00\d98db9bb7d9c3bf5307a4939f4dc0812711972
+1878c6364273ad776e0e83780ea40d0981febd1b4c8a12e7aba2041686777efb  [     2,428 bytes]  .git\objects\00\ebace6ff8947bf0c084b6b8e1f8ec1f1f35b3e
+06e3962d2877c9829465e551653bf7da76ef05673b5909248b2e6029442e811c  [     4,325 bytes]  .git\objects\02\138f25fe44c1dda2691372896a89d1d4ba244e
+1bf19f02260ff6d8525e5d23eb8d723fea2927e1a8de6a318a915c3dc54ca050  [     2,124 bytes]  .git\objects\06\a62322cbd88587740d5f3d350b961adc010db9
+8dfab024e7928865f13f4cccd4b82d938fa6c2941c9a462ead31df508c7b95bf  [     3,730 bytes]  .git\objects\08\05ac245b21796d5794e2a752d887f6767638b2
+e1c40c8f9df358b1798584814e84ca7e66f41f05a814fdb5efc1a5ff64cc962c  [     1,975 bytes]  .git\objects\09\47affcaa81c1ec034774a740ed427d0c7cf56c
+e86630030457c7c4ee798d090cca88b687280355d230455cc943edc655a3995c  [     2,484 bytes]  .git\objects\0b\9bd6218663a133ab016467ccecc398af2f97f1
+3f818115652af3cc497960737cb86af6376acdbe238bcdf6202e428163aa5ea1  [       972 bytes]  .git\objects\0e\a5cc1d7b4cd76d07592a6741c88845670a012c
+610e3ac8ded58600619c3d60ba73e7ef10b7e24dbbfc12c0467c36e683152673  [     3,293 bytes]  .git\objects\0f\e0c086816576b45bf430a68b592dfa79c2381a
+ee9015ee57d328503eaaababb3f25b6827c39b7ee6894f37b002b04768cd4e0d  [     1,944 bytes]  .git\objects\12\9b77d77aba14bc6c2b2aaf98ffd00b508a28b0
+a3d2cbf437cd7fb3c99cc996912e184621080408f9d6e3075b36e774aea9a1a2  [     3,312 bytes]  .git\objects\13\0a80a7c46326ab1450f81bd1ab74aeeacbfa6e
+93be2bd2e1aeb4b2da01fc3c902d9a668f32fdbd95aa69aafd736065b9af20d2  [     5,867 bytes]  .git\objects\15\622108efce2e8ba8d28b14a391fbb3754f9c80
+6f368ee8b96416159e677bb7026f0f1b05ea309c059ca1d1b1edb2dd3726f978  [     2,798 bytes]  .git\objects\17\c4e80d47d68c63ded1e5b72a9bccb8862b2e0a
+6ac043ffc5035e3d9b45a1c06c01367dbe0c6130b367b3a0ee3d04d22953435e  [       642 bytes]  .git\objects\18\5eaad9c2a96322fe239b384267bc8ed271f44b
+cc4d17c4a53272a6c4e3d236a41161fe6ccdf3d766e1b85379add6e2693b041d  [     3,833 bytes]  .git\objects\19\d3cfe817a459c84e5f272e744131dd9546b4b3
+82dcc2bf8b63c5152e06736734314e3a94a54cca27a386cd23300346da1bf843  [       184 bytes]  .git\objects\1c\0a0645b2b1cab6d3d9647b5b2cb62fb999cfae
+1042a702101cedc77f950de2d5a822aa3d370e3849abbd72003c48f4ff205dca  [     3,827 bytes]  .git\objects\1d\1cf99002f5b190910d6de7544e3ecb0813b3af
+e57cc5c990e6418459e7d27a20fce87a476b5165f9c5009d324308712b701578  [        87 bytes]  .git\objects\1e\544b497ebba2f78c341da0fc3773d735bad293
+007965bca14481dedda86133723f2bf1d6a0bfd1b0678885de601e8b26cf308f  [     4,799 bytes]  .git\objects\1e\568633af58f2fe20795a6539fe7dd38eabd9ec
+c1569619e0c09392aff7e322a506147e68cc148451c0c4a3e880b5dc5d7e83f4  [       124 bytes]  .git\objects\22\00d05da3739c6d6534b3b2fb5b8160b17810e7
+493f95a3cca97d1a3da3062092ecf9fc3621a934b5fbc917b8f7889029ae6b56  [     4,380 bytes]  .git\objects\24\9ac187ed483309fce95b79959892d2ef6b1cd2
+cb07ab5024131b1c02ba8d0860ab8641b960fe53bf485ef953c744e65fd5a966  [     2,557 bytes]  .git\objects\26\68401875614d379320e3273f2fc9e4faf3b1ab
+bc07ada960c95a65037f057e474d2e64893e3db1f9c611d3a9a18e9d2c3ab453  [     3,046 bytes]  .git\objects\27\6f1089a24cfaf82697f483847cca5261411594
+b5f02622e4f56b1b5c22482f36ac3d68b58f36e1c3af6a7923023e44b1cdde0f  [       130 bytes]  .git\objects\2a\227bf5d3c907b53134366fdb72f43d11a3511a
+7af98b41ef2e294866d295e991e15bdbd37c334b7913997b3f9c59deea8996e1  [       265 bytes]  .git\objects\2c\0156303a8df3ffdc9de87765bf801bf6bea4a5
+817436203c296ab2df2d29d03d44e42f2ff41b2d27161cc2cff02b492449eb8a  [     9,556 bytes]  .git\objects\2c\0b01e5714cb1e5b208b3d4f8f39afaa201ebf7
+b2a99d19c1b14427cc2db2878d8c3c51c5f6796df2a6e8cee7ba8b654be1e617  [       159 bytes]  .git\objects\2c\f6a583975802237cf8d4ed4a0801592161c2ec
+aef7a18a25037ead17742913432e8ce58bbfbac546f8ef119a3ea2c458fbd14c  [     4,548 bytes]  .git\objects\2d\9201a25a7772832fb3919e287295910b8e8147
+af39e9f180aa1a2b5f4643f4f20f2437b497d85ea023341e1527aac70078df36  [        86 bytes]  .git\objects\2f\3220ded18d1fe7f705ee2a6b353665bee489e4
+c6e9e1f0d9b7855900df2ff458520892481be006770e345f71e6014bdbd3662b  [     2,990 bytes]  .git\objects\2f\5f66d191355d3445d9cafb98eb8a8e52682e80
+52f701474c28d4ff5d318143ad9c4ea1ced022511271f831e904a3382bbb250a  [     9,350 bytes]  .git\objects\30\7cef2a0fec0d5225ea74a3e4038599d679c56b
+3edb6ed48401df719eda1a01a66092913412b89fd8ca49107907d700c074eb4b  [        54 bytes]  .git\objects\30\97f79c3c828278d05edaf84750e5f72c6be450
+a1fd42ca263e729862d7ea1c19ea876da8474bdf94fcdd36e0a133f5aafb5aeb  [       114 bytes]  .git\objects\30\f4907124a3e381f1dc2e47b6ee41eb7b91928a
+d028adff48a444f77328d8b69b4ee4f01718c3417b4c7eb1c9dfa99894d9db2e  [     3,361 bytes]  .git\objects\33\7c84f303bb79bfb6ba24c31d9c9e644f18b2a0
+2f65444a9229aa48b883cd15ff0769622d8b16f1adf57809d23ae59e68a0a1e6  [     6,760 bytes]  .git\objects\37\438a46fab69cb574ce240ba8537a381e4262ca
+408923757a13536009e8a0f9b8a328254c82722e8485e7837150d737c8c0011a  [     2,564 bytes]  .git\objects\37\9c0c0febc1712981979f09e6ca5c90555204ad
+e3d786d98bd730968fa062023c0b4277b3d60d8bcee984fe3a8f8425ab1ac21d  [     8,327 bytes]  .git\objects\39\bcdcf73902638749d8ed32c361454ecfa56883
+1ca177518332a34b10eb9e12c8bc48d84f16bf5e3b02d4f98b8a2aa754d1a1d2  [     2,114 bytes]  .git\objects\3e\58ba46ae22a378584b49b48f9430e9ac9ff97e
+8e0b38c8fe3d7b45661114848871e6348702c400c2ac5acd7f04fa4a1a7d664f  [     4,713 bytes]  .git\objects\3e\67d490bd71d927ca06604f55f9b21e0ab94c5c
+f585c6df9113c08bd8e4cc6b9f512ab2f01333e60feb429a7e33c624ce78bc66  [        87 bytes]  .git\objects\3e\96f67e44737805689c373b2c10c8435b771b2b
+991e9a09efef74b52d4a414a49d0269c376914cb541aeef9faaa0bb922af8c2d  [     3,129 bytes]  .git\objects\40\202ecbbcbd417b2ce2119bb4b2c59aee6c6250
+c3aa16ac8ce63f47224c9aa062161dbe8344e077c81ca64f9e62456f4dc3a6d0  [       856 bytes]  .git\objects\40\f8f1d439b9b17a57e0940c26d06f697a133f7c
+016e96a51f2a0be1148b6e8bde4ae2e0bdae7a2e2203ba598d1e627669acad10  [     2,663 bytes]  .git\objects\41\7f0c45bf2741ebadcdd31a43c009917abfc30d
+684ca98dfe84722b8517fc347a0ee21bdeccfb90df77839bc37647c04048b255  [     2,440 bytes]  .git\objects\46\4980e9feb4fd59eb18bf9e9dd57857cdd6408c
+d9779d9d620710d507204fdfece63a9a59ea7790f864b0538a54bfa92641f37b  [     2,237 bytes]  .git\objects\49\1f18c53727cf0c917c1ee015aea88ff6685bad
+9607e17424aa5d477c47e272c2353c0380c2dc11da6344433cdbc101a54669e4  [     2,412 bytes]  .git\objects\49\3d1872caf29a5693a39c9f78bb570db5137fe0
+7225d3bbc5bbc93728d7e8ed2b01c5273dd5b0f66ae19b35386b9163878356ee  [    27,548 bytes]  .git\objects\49\a43511bfab98d42030bd790517b33bd2df4afe
+88f53198081b565d9743000e543419d5fc87914911ed6e3a400c32e34d52ea11  [        30 bytes]  .git\objects\4d\dc7cd666fb58ec211287b55d9598afcd36347f
+1d87824e0c1baca98bd452eb7938a11ee4b5e897d8c98265d885f24833c79beb  [        87 bytes]  .git\objects\4e\37f882123eb935a27a64865b5c85e0e6e29d6b
+6036963d00c5e01dbb5285730d45440ef872b63557a1fcbf1a8d584fb76ef686  [       496 bytes]  .git\objects\50\3a1d3a3d5f1b44e5eb20357a80fd1747ac32d9
+c2a4ae370f9fe182266f7d87be837502e92297866d213965d8fd85b78984d139  [     2,620 bytes]  .git\objects\51\a3ef470c42a8a8a436a0c6349a0c4aae038230
+dfe9c1f0e08fda753ee76c4bdea8895eaa51de9b5b090b962688f840e431f1b2  [       261 bytes]  .git\objects\59\e44fac205b99a84fb7bd657edc17fdbf34c314
+19f5246287097a2903417f234a6760d25ef2394e4b8dd714690c4ff9df6c5200  [       115 bytes]  .git\objects\5a\cda5e2a2f1f589fc450049e68d016bd16e0567
+259539b45f15055f06ee16668f6b827285b00672be751ac3e57160713a0f2c19  [     3,383 bytes]  .git\objects\5b\04347c234a9f45c360f84454f253b2a0fe3c7d
+171e905c03e1ba577ad1182bd38226b7e95cbada74dccf347f26cbc5d94b78c8  [       481 bytes]  .git\objects\5c\43ea036997076e3405b6f9ffeedee870cb74f6
+af0d3d8f8ea5fe3ef8da17f5c824bee7875fa55550a945b08672759f2ff2ff15  [     7,133 bytes]  .git\objects\5f\f338c32db40f89c18ac4cd914615745eaf13a7
+0cf35f8620914585c550fd99bcef2b87316532a3a9ab5670c892d4dd7ec03828  [       500 bytes]  .git\objects\63\f7dd530e7b8e76f3597062f70071aadff58c7e
+a12df2f291e007e7768259389d30baae56b3900e160e90eabd4f6a46cb79ef5b  [       325 bytes]  .git\objects\67\64ff92b2c3b88eb6a8320d48179b65496672c8
+ba3ddfe65184f37cee201e8fea27abfbcc97d894483ab9f62365cf9b110d818c  [        55 bytes]  .git\objects\6a\724bf0df661fc186ae852dc9db17ff221bf54c
+fc845a90f62f7f5640662d88b22b3fbfa56f4211440c41aa14f995dd8df5064d  [       510 bytes]  .git\objects\6b\064f71ee980938646d60e681b579ffc066c81f
+4cb564a2c0bc20b032e35674edbcd033e8d30c5c129c00ea6c31f05b7100af6b  [    64,285 bytes]  .git\objects\6e\c1b4c713797031adb01c73e615cb65cb362c97
+8bdd0d175a286b0d7d32641ae908a69dfa104897ae44741b81659808b14912d4  [   115,313 bytes]  .git\objects\6e\c221b029ed9017a0fe962aa9bee380572fc6e3
+4c73692b2b2336adc39cb549d3a72ce875ab791f2d8fbd138dbab0af55c4f648  [     2,986 bytes]  .git\objects\6f\91ba374d80f4cb197237fd7bef42a7afd7d77c
+3b472dd45dc2480b9995718fc71f50eb05eba02a8d2d89e4dd71acaf8d181807  [     4,596 bytes]  .git\objects\6f\d05c3bcbfe200b1f5f587f2791e588ed1187d3
+0496ca15e3c9b631ced94c8212d4163b060f8c8ccee512e10c5b7d6740d4bc73  [     3,995 bytes]  .git\objects\71\9c5bfcc336637e8a2bc504fa7248c8116e28ac
+6ca6cc06e306872fe705401239655fe38e1377ea5e78f648e7aadeb1947abf3c  [     2,863 bytes]  .git\objects\71\b63fdbe3296b5fab9811a8e1a1c513c405c41d
+15f81fe04e5b7807adc0e5c6a92617662d7d16dd2f9b1c6f5a5175f59501fd42  [     1,766 bytes]  .git\objects\71\df1d6151bcf3605b3df1a27ff02c6c5168e577
+ccde95310c1da7595a52b8086ac51855632e013a0aed6b975e4af7782a70e3c5  [     2,743 bytes]  .git\objects\72\dcd4ec361c136fcaf9c9a3f12ec23d28d1bace
+8f95914a64d779fb6c9aaced91166862018a920f2685247acbace94ece8104b5  [        55 bytes]  .git\objects\78\6eb90a94524be1ec1df438b0cdf88c3b29c8ba
+195d0a960cededf5167f34d2efffcb5b5da6fc71732c7182dcce1ccba3b8b107  [     3,007 bytes]  .git\objects\7a\74b8d98c1df52e071789ad64dc1a05858a42a3
+09cd1fd4e845925e7b1f8a68d1e833bcc218c19e55724f3b580bd61c6a1c775d  [     6,089 bytes]  .git\objects\7d\150eee920ed2f078c1c89ce3390c5a6372b727
+abfc5eb8e0516d10c112866cfe76af2fa242d76ea9264c7ee7493e5acdcba682  [     4,198 bytes]  .git\objects\7d\b40ac226744f411edcbb540bb0cf84d0303a22
+9bd6ab78ab88f7c0cc01a287bb726a91d377b9ff3720db80fb3a1dd227270c32  [     3,093 bytes]  .git\objects\83\cb88381f965cee78b6874af3f0e9888cac1b64
+f898269bc2d72261572a716345124f6d52dd509d7ff402ef9483bb55b51b18ed  [     2,006 bytes]  .git\objects\84\d4d8afd50df7e311cd85ea6e87a62f15081e8d
+207439df90a6792eec194acaeb7a3d3ca6276e5cc1464058ad119e6de38fb6cd  [    84,863 bytes]  .git\objects\85\41210d72bad4ad2953f8612f8cbb55ed51989d
+68e364db583a4533a75000c0c81409764c10b2f0b2dd012204cf027603c928fd  [     8,545 bytes]  .git\objects\86\467a1760a290c9dcc52fcf0b2c1418ecc66d2f
+de7523f05499f7e35451833abe29f287fd747d281b6f8a97ccd95c91ff6eda19  [     3,593 bytes]  .git\objects\87\8670930058937286fffc39bc5f986900a80854
+a6fd3fbe7d3fae6a904e70fe3edcd335d5eac195680bd1d694e5dd4daded1a78  [     6,047 bytes]  .git\objects\8c\8c4a2243e44c06f96ce0e8a9050e6e6bd47e57
+b470f77d3069b827e9bf03a03171136b673d4f6724d761f0251bef395c293ad8  [     1,225 bytes]  .git\objects\8d\9e71e8e2eacd5d98953eb9b887714b0ef30f51
+234cb1072b8839b55d97a63be7941d5c696f7e843aeb17466cd0e9f6c8523a3c  [       183 bytes]  .git\objects\8f\238fbee7664866789520298911c56df8a53d0d
+384e66da4ca4a4d2bc0ab6f85c226ab7232d72cdc4cd896d88268677845cac31  [     3,865 bytes]  .git\objects\96\94ecd23695a57a5905d3726199aaf037fb4562
+73c73c0f73265855899372da80cc0df383b62bf6a61260eba722e13c7e9e7cec  [        56 bytes]  .git\objects\96\f902876feeed2d5b4505b459bc0cd6f398a100
+9cc9b158cf1c2d24abb9f67ddee82206dd5d63a9818c48340add70508fd9ef88  [        75 bytes]  .git\objects\98\c034253e3ad7008949dc4f0621a03cb4c175e3
+1b95a404e27f0eb8bf41deaca6dd372576446d82b42c8f85998c80365a7fdd34  [     1,889 bytes]  .git\objects\9b\6b671d772775b014f4ac8af1ba79f19529f122
+62e61bc5ee2711a66303d7e302b1d2d5293f8c3557ba2a5a1d9c88b39165b016  [     3,692 bytes]  .git\objects\9c\3c9d1e5efb5d8f04399504e1e5834415c461c9
+a93670cbe6a2e13e3122caf01ad592f4527dd941e038e57fc958bd2ac490a2a2  [       344 bytes]  .git\objects\9c\5ee129a2e6bd140fe711f9422fcb846f5f0615
+f4f8e4a3d876cae4eaa58cdb21c17b11fbe5c2f4a66f39033cd491f336876b78  [     4,327 bytes]  .git\objects\9d\1395d7543c5c5aa25dfc102d2d39d6ea907cbc
+c79a15bcbb2b47af564b346541d965be0985619f2765dc429f6f2a73c508ccc9  [     2,820 bytes]  .git\objects\9d\aefa8714d762c29017d3ee4d5994690310fbc7
+3decd47f53cdbd1a6e467d15d3726af4e3624d7e892a7e2ce78b594122fea42d  [       188 bytes]  .git\objects\a0\0c0668ca19da758682d618822087d9daf8499e
+09a47cb90d11eb412d6f1ab96678e16055ac4861a731611296d57f6ce3ca777f  [       451 bytes]  .git\objects\a0\b2b2dea190370b162027181dd45c1e12321325
+3463b2acc980d26d91f5f75d797489a8e896b5611a723c1a2f030f67c561c6f6  [    10,949 bytes]  .git\objects\a0\d8d676d5b0ffdb76091165d4877e587dbec1ca
+c913b882c02f57b5dd0f862492a3c10f0f160cd8afdc74701cc2188480a873bb  [       234 bytes]  .git\objects\a5\ae184937642009c39afd969193d2b515a247ef
+920e2601fbf2a9ca51247f1afd90b86c6db9a4b8886e716c9058464c93ccac4f  [       121 bytes]  .git\objects\a7\fbe99dfe5ad982741e09b71397bf295e0f7ad6
+f11db1a088114836d9e38ae1c2739db22639d981c55b552a2d4b3933b0b1094c  [     1,735 bytes]  .git\objects\aa\1fbec0529a30cdce80786392f3ccfd5091ca89
+32187229eade511e1aa38bcea41f7007963342b17e973268993f6b17c927446f  [     1,597 bytes]  .git\objects\ab\85745348ea141cb455df96530da69c062efece
+a9a91a4ab105f7d44f8cce7b898426d7c07b17993343a7ad3875d461771faa4e  [     5,243 bytes]  .git\objects\ab\ab51b55afe0ecadeaf52023d8beeca0f565abd
+cb4e6ecf7a301ba3e6680503efc3ed795def060ce91714f194a6570d0ed4599d  [     1,615 bytes]  .git\objects\af\afa3e014fa3226662113f45b79f179ae8c6b84
+9e87f00efa4de438ebe6efee28258801d5b850dd1ebbca8dd8a9033cb37a5b03  [       955 bytes]  .git\objects\af\f6ea90cf11d1ce9f608f47f7e9afd4119e9571
+a2e1d401b3910e5d3eea1fb82a678ab17f26d4fe395e4b3162ec9ff624cf5efc  [       184 bytes]  .git\objects\b0\21f62d2938ee57e89049395870696ee3b87a9b
+c6ed6506511d9c67ffc64ce36bc65e1c65a37ae92d265db09d3ac2d07e54f66d  [   101,020 bytes]  .git\objects\b0\e084d21416440ca6eb1ca295594455d68981fa
+0dd89e5437cbb1fcbfee4d8f9ee2d01158dd51d5aef0ef356daef2e06b318ea9  [     2,903 bytes]  .git\objects\b2\3ffb531981b10db18ff3efbdc2650ec8065508
+0370273bd61c54b1d06164f9085eabc4244609b8b8ffc020edd4c04d0e76216c  [    23,634 bytes]  .git\objects\b3\dcbf8f2bed1bccbeca46c824a948263814a7b3
+171d851a3430af4da2b7af22b5cd3fcbbf6b8a360d413740de7d9325c4c80c05  [     2,792 bytes]  .git\objects\b6\fe8135549a4f5b766b976ef467ce3386686aa1
+9e2f75f4e49ed8cf1e2a59829352f9c3a1fe33deea1d44195077f79bd763260d  [       425 bytes]  .git\objects\be\ba318adba7c59f6d9889d9d407705389d5cd32
+f91d30f45e36c979824cafa3c2dd1f21b66c6a64d997dd1d1528594285937e44  [     2,849 bytes]  .git\objects\c1\01f04aa88c32a45c148eb39a8bbfb19a326990
+9ab26299379af25ce7343c0e6f1ed7fd300beb0d22a902f2733039a4ec3c5c83  [     3,998 bytes]  .git\objects\c1\d5a9f91a3a9f73401b7de1cd84106bb02bc6a1
+b06142d318bf76e6e0415a0408fd7d25606c78951ee34a3b0186e274a69526e2  [     4,930 bytes]  .git\objects\c3\63ac04128d1e3e2e70d082860b9a4f29ab8dc1
+3124625dac82e3b37d23a89c02b669fdabfa1d7a5550c1f6717b54f318575ebd  [       791 bytes]  .git\objects\c4\1fd15304df0ef264f179c6bcbcf29c8ed4a43d
+bd03f4125f389131b275f7206b9c97850b9c5379f535fdbc5833a666bfe483da  [        48 bytes]  .git\objects\c7\b23ecb1408be49fb2fa8ef77ffa48640681e34
+9bc286467b8c045306c5b3e1b58b296e176c20dfa2e86123bad9237305e0c562  [       344 bytes]  .git\objects\c8\1765fff1ee71483a9dafd5fb5c9b95dd31d543
+bc21c13cba760a1e34431223d0861dfa82b346d8cf7269d93c305263c0a92b07  [     2,650 bytes]  .git\objects\cb\7628a6782d0774985f14964a6bd82d90fc219a
+a0968dcd5283d2be87b262953b5e74c94c67c8ca39dd52be5973c0906a8b1c36  [     2,209 bytes]  .git\objects\cd\9f555f64b9a1710772c1c8b5ff8a13ede0c03c
+f03c9468e20a8f13f0647bd7140c4945ba597b1e224eb39c9bcecb86d327b021  [       147 bytes]  .git\objects\cf\622004fc22ffd90d647d2c7bdd4f1053eeb53c
+2b85c808482af2e1be1e66c5592e0c2365d0e91ce19b046aed35f59d38762773  [       125 bytes]  .git\objects\cf\e611c156a13511c8854eceac5a8b2678630131
+786755d19dfa7a297bf418f2fbc9738a241b13cfd7c6902b5e56dd20f875ff24  [       625 bytes]  .git\objects\d5\36b7b48cdb9ccd3edf64a9772f095893c30972
+1c934bf438aa6350a37a1ae73345b22ff97940a19a14016595971149740becc0  [        53 bytes]  .git\objects\d5\64d0bc3dd917926892c55e3706cc116d5b165e
+709de0a4ab3575f8201efdab001e8280a99b2a77efa1f7bda22c45bda35c7f61  [       108 bytes]  .git\objects\d8\8ff972daf767f1eb8be2f3112e0631ae707108
+d2b29bdc46a92409e5417ad73c8cff3f274f98b49ed39c68340ab5338341472d  [     4,428 bytes]  .git\objects\d9\155b65bb978780fa31d701a4233b8fe544a3fc
+cf2e99c33505f90becc2a38872b4384deb3322dd3d1346d092e8ff595090e8b1  [     1,856 bytes]  .git\objects\da\d46e0a9863b52795bedad11f7aa521c30959db
+f0f51f812b76e7e9b246a89879531c9ebd0bf6e2a680ec71151a16546d43757a  [        55 bytes]  .git\objects\de\f6ad1f1e1a1eabbd9650c11014539d305432ae
+b080e8e5b24eb125ee08a04bee5643eaf81234f9024855516fe629d153d1c868  [     4,341 bytes]  .git\objects\e1\195ae7502dac8d44fdacbb53fc3773c85c4f27
+2c0193a6080bd0a1fd2dc0f97c86c3a6a4956c35fae3acf21294f4a42ae5a390  [       245 bytes]  .git\objects\e2\08005f0ebe79a39a1b1bf3c56e75139c363ef4
+5511902499ea7ba63db3272823388495088bb51d1f49e27d1a6fc46d02e6fa9d  [     6,224 bytes]  .git\objects\e4\6f50134d742c64e96ebabc53cb39e1afdaf99c
+928e0b609263835372b1df69595a1838d97b1792d970a5476dd563832493b63a  [     4,472 bytes]  .git\objects\e6\6d8772adec9bdfee21728200647552aa54cd2e
+164c5fa8067facf1a43f09ce3d0e35ebf53a7f5723ecbf15a8667cfc53c26f6c  [        15 bytes]  .git\objects\e6\9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+5e29a50ea6b78f89b0118a1a6fae818b9f618d7c17472b2f302ae7ce4535bd0e  [    27,894 bytes]  .git\objects\f2\b048497ad1ed0548c7b6f82c155ca3b3a669d9
+b5ffb78607d6186cb79f9ddae00c89fd0cc01bf10e55416f9588e28fe34cfc83  [     1,570 bytes]  .git\objects\f5\7c0e7bf7f0c1b546bde6ae78ba28d82d77cbd6
+2d2b8bf3e77225f8e53d477072621171054342902d26c6393bf208de09e5f024  [        68 bytes]  .git\objects\f6\5a0075605114566f2f5ee0060ab339de0f34cd
+b8ef36c3e5d93326f60a60357fccd610a512444b8dc0d1fa89c0f83dc16a924f  [     1,760 bytes]  .git\objects\f8\7e830de5bd5813bc7a2d1822d31ec986191de6
+e16afdadbc5b9615a16c51b6c0b8c8a3a1ac5292515dfd1066170163317b3115  [        87 bytes]  .git\objects\f9\17771c3674cd3c05bf88062e35503a593be822
+3080ed2ade2491c5b323c800e47d57ed2f1271953e77b1b5356f1cffe7746993  [       795 bytes]  .git\objects\fa\9d7dfd14230b1005c1db2bc93136198270ce28
+0c8e65a6b504dde5db205a7af29558edd3274d2cf054b20566782be72603a2ea  [     4,219 bytes]  .git\objects\fe\79ec98a86c7a2b4aaa79f255739b87a9d1bb80
+72320c0c9c5f7aa8e6d4f8810fbaf5e96528ad3dc366abdc1c8ee0dff90db03b  [     6,970 bytes]  .git\objects\ff\7a83c14f8d0a2270e2fd2d5dc90e5a7321552f
+97c35af1b4c104209648514c884eccdcb7a1701efa69d0f3dd988699724f1982  [        41 bytes]  .git\refs\heads\main
+97c35af1b4c104209648514c884eccdcb7a1701efa69d0f3dd988699724f1982  [        41 bytes]  .git\refs\heads\staging
+45ee12308701083d709dc998764cb22bf4088096fc69195e962f6e510a71f0b5  [     1,108 bytes]  .gitignore
+7a371a6ae237de4ab78f7982d67796235cec8ffeca5ceee4ebbf23d314702092  [     6,174 bytes]  BACKUP_AND_RECOVERY.md
+b71d4e21032281c6a47a8b5fee46baed3e0a053499fe9cab6d579ec7ce9c7a4b  [   852,346 bytes]  City Pet Pharma _ Factura.pdf
+d922ceddaeb650f02dfbe0c5f11062f8a30ce44a7e2c50a9467b4248a52ea33e  [     4,357 bytes]  DEPLOY.md
+806565471a9e39b7224893f79e258297d54ace86c3f6c057d1a145d7cb61143c  [     3,833 bytes]  DEPLOY_CHECKLIST.md
+17555e8d053f53e40ffeaf16ebf6702b72764a74a8e1629fc13b81ed33888f84  [     9,233 bytes]  DEPLOY_GUIDE.md
+b0cb86c5172725b6ec20dccdbf2640188d1a5c8a055aaf713031195434badaa2  [     6,630 bytes]  ENVIRONMENT_VARIABLES.md
+8c3134bf66b546803d2eef020aa66f0a5d51a47c2c9ea495be47a412ee6c24cb  [   770,216 bytes]  INVENTARIO NUEVO.xlsx
+7d22d1b26baa8c379ec22264ddc9a9e95d765f87c7d051cf4bc8bb719e05199d  [        60 bytes]  Procfile
+78c0c2efb36e8c6f6599bc38816e2e0fc87d26920af68c780eb98d06075426db  [    13,708 bytes]  README.md
+bb22d20925d3774d9eb24f0ab606f41377450c8570f5cbd4be9331c3f2fc5a08  [     4,163 bytes]  STAGING_WORKFLOW.md
+d1480b9b3966b0d21beaea082615034d0d8b69c1ded9b78be25766bce06b454e  [    10,267 bytes]  app.py
+ff5076aab5c9d03e96b96050f2c4f12a18c395dec9be91c89b68378338e6da02  [     1,817 bytes]  backups\auto_backup_before_reset_20261106_160807.json
+e4bf6dc3965a1713604096a850827db77e4d001e96ba1f096762d8e46cf67129  [     1,817 bytes]  backups\auto_backup_before_reset_20261106_160900.json
+71564655f5fd6f236cd1a58734e98759197fd268b6851a56d8dc199faeacc67c  [     1,817 bytes]  backups\auto_backup_before_reset_20261109_195600.json
+edcff35744c8450560a5b6d4b1e5677bc6a405cdc400f141ffe6130258c0ca6f  [   135,022 bytes]  backups\auto_backup_before_reset_20261109_210829.json
+b0b27ea8a71199b4d22bfabf91f1118b577cf18883907253e9981ae466f860fe  [   135,340 bytes]  backups\auto_backup_before_reset_20261109_210830.json
+59c7d19670b7df9f5593b5b2afa802568da078e180047a663c174c0df9aef49a  [   135,340 bytes]  backups\auto_backup_before_reset_20261109_211229.json
+b24ca2db33f2db0ac78769655867b071ed8c3b4c95e6ad827b4ec0c0eecda3b9  [   135,340 bytes]  backups\auto_backup_before_reset_20261110_200742.json
+e33e4b035e496ed83913ee8e7525d311a3526fab8720a176880234604268922b  [   135,234 bytes]  backups\auto_backup_before_reset_20261110_201800.json
+91dae19451b4da21270fcb7db587f8dae6c42f27740fb2eb7788741af2fcf450  [   135,340 bytes]  backups\auto_backup_before_reset_20261110_201801.json
+a82384a78ddb73b39c084a66d6d8dabc634c87ca1b92a23353f8c3f1372ac8f6  [   135,340 bytes]  backups\auto_backup_before_reset_20261110_212210.json
+81dc4eae76ea55bcce528d853b953f1f870e44ed8e1540f24ce8efbe874082e7  [   135,532 bytes]  backups\auto_backup_before_reset_20261110_213624.json
+301d0e0fc37d82159b8976d7dc28d12f85a4b65625fb35f13e082c477375b692  [   135,532 bytes]  backups\auto_backup_before_reset_20261110_214154.json
+4e456cb5c5866e994a4fc033ae676413995ec0b2c6dec9385d06404e9004f75d  [ 5,800,791 bytes]  backups\citypet_post_transformation_backup.json
+77eb772e0db8f33cf5e5e2aaaffbd08f685b835603f64d0d36deea4f1f23001a  [ 1,040,384 bytes]  backups\citypet_pre_transformation_20261109_142110.db
+77eb772e0db8f33cf5e5e2aaaffbd08f685b835603f64d0d36deea4f1f23001a  [ 1,040,384 bytes]  backups\citypet_pre_transformation_backup.db
+361836489d899ce26ae121647b17a7e722ad6e82837aac2f17a35752174bdc84  [ 1,273,856 bytes]  citypet.db
+0e49f4d0be2274fb4e41b7afba9c76fb3b69260fd10e3acbdf036a61fa5a03c3  [    15,143 bytes]  config.py
+742c4742afc3601edee84781ae04e09baf43593e7db5837f46fef01ca52704fd  [       417 bytes]  extensions.py
+c118981d812ffac62194a3f72641a77f3d816aacf06de813adc05cdf98df2703  [       885 bytes]  migrations\alembic.ini
+3ee9470dfb47eceaa676e7e760ce7dbb6c6bf5fce62973aaf51fd2b367743c75  [     2,090 bytes]  migrations\env.py
+f3fc6003e826fce85e8673bb0a22228d68279b4d1996ccc41ed207ac0605265d  [       494 bytes]  migrations\script.py.mako
+186a4497f774d4b4cdda022dcfc74ffa9a5fbfe7b0271a73e61aeda65bc27c99  [       938 bytes]  migrations\versions\0001_initial_citypet_schema.py
+a303e57116e38c8d69e5dabb183efc4f3239c9aee8ee3dd7a3cf15865a57ca57  [    46,264 bytes]  models\__init__.py
+b160d82f7811555051f8966d8e02750a985227c1d022208c784e606946f2eada  [        42 bytes]  pytest.ini
+ee9c688c61336c2a6f27c46bcf5310605e11073aa307f02c6e7f18d02511f07c  [     1,975 bytes]  render.yaml
+93b8f18f5abc7e02e67de33ba7edc31d5a23d1171fe38bc3b40003c59fd5ceff  [       254 bytes]  requirements.txt
+3d75985427604c0a271040bd22c400aeff14118f12d8d165a6d16ae37cf33d39  [     8,074 bytes]  routes\auth.py
+bf0942814c7d806afecea5a5f242d0a14d282f55a11f86f9f061bc72852daeef  [     9,074 bytes]  routes\clients.py
+a4e7b33f3bad6913de36930dd9cb03c94d067a147d51cdb40568c1f8b83b1b9d  [       487 bytes]  routes\dashboard.py
+060e8cdb76fa1b685717bb81347406cec0a2f2bfb382f30e9012a299184d3651  [    14,955 bytes]  routes\finances.py
+9695ac23451edd4974da411bfea684dadbf95351de8842cd821079046474def2  [     9,775 bytes]  routes\imports.py
+facf52727f9a0cc011e759e46919c7833be98f626a17d00906e14165f33c61f0  [    10,918 bytes]  routes\inventory.py
+9dbef75dcd7366e1ffa9bf34e0ec0bcf40cb3ab2fc8c7438bd84b1bae2d0c58c  [     9,280 bytes]  routes\products.py
+26aab774c27f7925e4ce232b96c49078f0117aee018a437775fd982fecc88142  [    10,458 bytes]  routes\purchases.py
+4086a05d8325754498a01f2aba2cab79455780ada759f69f38c78bc9b14334cf  [     9,259 bytes]  routes\receipts.py
+70ebb4c593fd8cfad202090ef722fbc89ec637e77678ef35d2a9f4a9e29803c7  [    10,549 bytes]  routes\reports.py
+2c5734d099054ce01f2eb5c7c5e335d9876152f2f483122bd9a13d281bca1015  [    11,665 bytes]  routes\sales.py
+a551f344ed18ce23aa5deec99217476dafed9b835ccfc04d9dbd245d6433dd30  [    24,718 bytes]  routes\settings.py
+7c96c71dae2961a6b0b971c44fd4f94565369abd6adf09f62956d17a3ba7ede7  [     6,201 bytes]  routes\suppliers.py
+a0dcfb5ef0c55b594c18dcf8e25afbd43361c4b7f217794656a4122d18e730b4  [        14 bytes]  runtime.txt
+ee2033e97e0dc21655493efaf3279aed1c50bb2973c4141f233f22627af85d41  [       896 bytes]  scripts\sync_db.py
+b2ddc86e71d55b9f7f5ccca7d6c61709b9ea0a5ebb9d9d8e1b4b3961d70d3ee1  [    42,784 bytes]  services\backup_service.py
+9c0f4204ad110c4ed606e0c0d4353eb8c99488c4f90ceb31a8eb0d83d3273de1  [     3,094 bytes]  services\crypto_service.py
+cf53042e285ce6c45c7f25ba1e1f8220bac75ccab5b2444aa0c03bc2f1976289  [    26,930 bytes]  services\excel_service.py
+364fe269ac9a119a56c920ce5bcda14a51af01596d9e3d07ae212594b41b1a28  [     6,558 bytes]  services\inventory_service.py
+e84e8c9520fd7fd61bef0ac00506a42ac325b953d5ce0896ea316556e160e399  [    10,743 bytes]  services\migration_service.py
+5afc8ab2f1c0c8afa5930aaec69a95732d4ecbdaa24ae1e4eb95659f806f8381  [    19,307 bytes]  services\payment_service.py
+be8d33c35b9684ab1880398c84e855420851f92cd59fed256a81dd02284eef76  [    19,258 bytes]  services\purchase_service.py
+d1baa832740d0a9b0cff1e5bcbefa10ce2588d47e989875dc6644481ddfd71a5  [    11,845 bytes]  services\receipt_service.py
+50225ef73c46e1c45428a3a8ed067f3e468c8b59e593ea4d2c2ad486150aed55  [     7,762 bytes]  services\reconciliation_service.py
+1c18813a709927fb77abde077c6857e6f205884aa012b8ba16d5e56f59e69bbd  [    11,406 bytes]  services\report_service.py
+1b6d9337609ea32c54da52dc662c22efece7d7e341a94a2b1270e54dedbd9162  [     8,544 bytes]  services\returns_service.py
+981033e9026ee1b1955f53c15c1163479220f34830ba813df37bf9881616fb90  [    31,164 bytes]  services\sales_service.py
+8890813e60e1052db8d9cc703eccb441b764ec891eaea5c3a42c678591937304  [    13,070 bytes]  services\storage_service.py
+8c616ad5429ec6d7b5760513b9c7be52d93aeaed0d082a9e8b3c5a5e00154c13  [    19,883 bytes]  services\summary_service.py
+ced64af434ddb43b34bbee3ac7764f0d4d6a1e02a5c39f83fd114b842c71d42e  [    10,723 bytes]  services\telegram_service.py
+f5b6dea1e27ee8907827de4fcacd8eadae3f7e4eb27aa923358a2394d3d672cc  [    17,549 bytes]  static\css\citypet.css
+e5747c180cde0987d879e913a8471e130f76204e0ebcd8ab937191ded6439688  [    27,848 bytes]  static\img\citypet_logo.png
+c5807bd3ac3407d2d8cec0e4cd67fef3b58f9583710f49accca708bef0a0e77c  [    28,211 bytes]  static\img\citypet_logo_whitebg.png
+d4346478e0be22a7612e54d7c0266a356bd4ae96569641662057ec6a516fd57b  [    68,138 bytes]  static\img\header1.png
+22388697af38194106c62de184f00c5bae765f4734211c96f697364144f350b4  [   119,958 bytes]  static\img\header2.png
+c209ce874629b8f5e63c95fc28272622da501aa0c03d7afae21f8d2d3518950e  [    24,525 bytes]  static\img\logo_crop1.png
+23bf0351a81bda2892b25fc2d0d8cb25a14d515000d004b6cb3fadafa4cefeb3  [   105,722 bytes]  static\img\pdf_page_1.png
+45897d3840349b9d3bf759c0ba8e5430ac577bad8501c95804d644bf0be870ff  [   109,767 bytes]  static\img\pdf_page_2.png
+50133f0ad20c34288660bf3894090acabb713caf84afc6e7b71b27e43a335fd9  [    17,431 bytes]  static\js\citypet-interactive-tour.js
+fbab1da61436c4ab69342f3e1c93d3a27642f7c1a17f655b6ceecede61ad3ae9  [    12,335 bytes]  static\js\citypet-tour.js
+0fd6f36e6cdde5fc9893751718e26894bb7287ea40de3418f659206b3e361920  [     5,067 bytes]  static\js\citypet.js
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  [         0 bytes]  static\uploads\.gitkeep
+445194216cf09e4096fd1f4315fff5797791845cf2d049205f8e3311b8bb34e8  [    97,207 bytes]  static\uploads\prod_CP000001_1793934453.png
+08165b1edc2b799fb0b4f39f38e9ba523371cf8a0efcfc0ec43433e497db5529  [     3,650 bytes]  templates\auth\login.html
+5980618dce574be93a484712758a54d8b31fa408b012a4c8d6d218f0f7fc55c6  [     3,163 bytes]  templates\auth\profile.html
+f1e9c6cfc7ffa75ca1c647f7effe526eee4bce59d8e560928e1b2671d149df7b  [    20,470 bytes]  templates\base.html
+09c408de1b48135859516bdad10efd91fe741573f0fa61bf3c35d103b1f59601  [    16,815 bytes]  templates\clients\history.html
+bb0700d127326722858f9c9a44ef44b46568dbf96912e78cb335e1c88e2f3587  [    15,572 bytes]  templates\clients\index.html
+f04e81ea17ee6e08f449df638982331a7a27ec73e19f6b797ced1023ae8ea543  [    16,552 bytes]  templates\dashboard\index.html
+25f7c0c7133f100f39e3ef134201943147e11cf09930a9210b96d162bac48b92  [       533 bytes]  templates\errors\403.html
+752dcbdaa81246f2bf45652f20f4f0987d1d8ac99c6c683e576c5c89cd2c6023  [       500 bytes]  templates\errors\404.html
+d8d19ed5a367ae2a2ebae84e0af1f967efbd997e1815954db76665f5d5356488  [       534 bytes]  templates\errors\500.html
+7352dd9222743b77c302a4caabc83c53ded920628feaf575c90ee626c4d14d96  [     9,261 bytes]  templates\finances\index.html
+495ea336b5b8d101148ebd564f5605225b593ced42dcf49c1e0c2c24510c9a0d  [     7,642 bytes]  templates\imports\index.html
+d7602af50949e1bfc34b5852f5543b6e70431f1a1b5434357db8b342f02944a6  [     9,397 bytes]  templates\imports\preview.html
+fc3ef041ed7e18d7677010528f323ebae9d4cf7d95c35285d8103fcce1e242f4  [     6,102 bytes]  templates\inventory\audit.html
+438fba4d5fe553b522df769c4b43a989c97a6206b7658f57a406a3dae83e5022  [    12,352 bytes]  templates\inventory\index.html
+81c5fd813215bbbe811d40ea9616c8beb9cdb73fcfdb0621f1b3d3171233a2b3  [    10,032 bytes]  templates\inventory\reconciliation.html
+deea0eb12284951962e51005090c27fc998d992ded6ee7c8cc047f4ed261c0b6  [     5,413 bytes]  templates\products\history.html
+eced0085540d7c6ba12cb59a77fb1578aed2d0b530c98b3f192c7924648d5961  [    18,320 bytes]  templates\products\index.html
+a8dcf871b53fdcae43ac707a8b344fc46e04f315675b5264d31abe60c61d5fdf  [    20,699 bytes]  templates\purchases\create.html
+b9475e72bb931194efba5985d4a0880c1cfe45f348cfa3a8882bd89b845bb70f  [    12,176 bytes]  templates\purchases\index.html
+bd0deb31552b704d44cec1dd2b719d129494c1bdac94298e8a737a541dba4afe  [    14,584 bytes]  templates\purchases\show.html
+fccd6978838c46ec641328cfad1c84a4408c4a2b03f53d1999ea9912f17aee0c  [     4,938 bytes]  templates\receipts\index.html
+f9b79f1e08efab370d7e0a28e187cb0a885c10c0e248d34ee2ee887d8e779235  [    11,631 bytes]  templates\receipts\invoice_print.html
+bee02dea591eeed05c9b0f45981bd423e22318568669458e6643243fb05fc5c4  [     6,413 bytes]  templates\receipts\view.html
+b3c7c669b2f98531842cd529e37539013897eb382a53d42f7ae061c1771fcd5f  [    10,143 bytes]  templates\reports\daily.html
+398257703c65a8cba9d592038305e156465d488278d19442875782cb9d13f75c  [     8,856 bytes]  templates\reports\index.html
+14e3992ab16d41014c2d786c9265a93aab2aaedbc4c1d281fc9557cfda3de056  [    10,234 bytes]  templates\reports\monthly.html
+9e4ba2f3ec653d6af719ad8245a93b4e13e53d4a7dd86ecdefb517711f8115e5  [     4,410 bytes]  templates\reports\trends.html
+3a6043ce4200b27771c329d114f8d1350096f05803bdb648298f25beb5938570  [    16,452 bytes]  templates\sales\abonos.html
+8e0613048cde570aaee5be8e9e04178a163736d39ad265f5611df4270d5ba8e3  [     7,483 bytes]  templates\sales\index.html
+d7cab3b269d40d10b4904c8f92a01d0da475545b6d22d231081be3f6916e4e64  [    33,527 bytes]  templates\sales\pos.html
+139e71cae841c0c70cf3fe97809143f1a6b573ca1b39fbe523718e5b8b3a3209  [    12,585 bytes]  templates\settings\appearance.html
+78bf141ae8bb75e5506a708edcf0124550d91e8bf48974b59defb03422464a33  [     2,109 bytes]  templates\settings\audit.html
+e65c84d975780b08becf133e20f0ccfa97e445905f2a45bf43d867b15ba84593  [     9,001 bytes]  templates\settings\backups.html
+5b644661d398940eef13f59beba3a2d626c03cb0c218ddf9a023428394a9b72b  [     7,503 bytes]  templates\settings\telegram.html
+f4106ab016926bd8ac997f094165c36f53b7da71e25621fcb97d5a69638659e3  [    14,474 bytes]  templates\settings\users.html
+e42c2124dee2c215f688eba1f90dd5c93cbb7ca84f78d521da9f275d47d13558  [    18,145 bytes]  templates\suppliers\history.html
+d0bc68c7ef8ff739d4d83fab9f80fe46312b880e108c0e6d681c58e00c0fd614  [    11,984 bytes]  templates\suppliers\index.html
+9b5127ab19f94350e20f9a322153a73188d977cc1e4368363c21a6633e09e401  [    36,850 bytes]  tests\test_acceptance_43.py
+80cb514607e2d28081031c61ec0e22715ac376baad2f4d79079cf4e991349cca  [    24,649 bytes]  tests\test_citypet.py
+a7cbff3fdbfe1046afe7985bb380114891089bbb529b310ecfc6c627d8c2169e  [    15,073 bytes]  tests\test_deployment_readiness.py
+3cbd98e3775cc9e9d3dd8703e40174016d0c0e6bc5d784b338613010bd54a25b  [     1,651 bytes]  tests\verify_endpoints.py
